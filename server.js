@@ -20,37 +20,65 @@ const io = new Server(server, {
     },
 });
 
-const gameRooms = {}; // Store users for each room
+const gameRooms = {}; // Store users and game data for each room
 
 io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
+    // Handle user joining a room
     socket.on("join-room", ({ gameId, userName }) => {
         if (!gameRooms[gameId]) {
-            gameRooms[gameId] = [];
+            gameRooms[gameId] = { users: [], locations: [], currentLetter: "A" };
         }
 
         // Add the user to the room
-        gameRooms[gameId].push({ id: socket.id, name: userName });
+        gameRooms[gameId].users.push({ id: socket.id, name: userName });
         socket.join(gameId);
 
         // Broadcast the updated user list to everyone in the room
-        io.to(gameId).emit("update-users", gameRooms[gameId]);
+        io.to(gameId).emit("update-users", gameRooms[gameId].users);
 
         console.log(`User ${userName} joined room ${gameId}`);
     });
 
+    // Handle adding a location
+    socket.on("add-location", ({ gameId, location }) => {
+        if (!gameRooms[gameId]) return;
+
+        // Add the location to the room's location list
+        gameRooms[gameId].locations.push(location);
+
+        // Broadcast the updated locations list to everyone in the room
+        io.to(gameId).emit("update-locations", gameRooms[gameId].locations);
+
+        console.log(`Location added in room ${gameId}: ${location}`);
+    });
+
+    // Handle changing the current letter
+    socket.on("change-current", ({ gameId, letter }) => {
+        if (!gameRooms[gameId]) return;
+
+        // Update the current letter for the room
+        gameRooms[gameId].currentLetter = letter;
+
+        // Broadcast the updated current letter to everyone in the room
+        io.to(gameId).emit("update-current-letter", letter);
+
+        console.log(`Current letter updated in room ${gameId}: ${letter}`);
+    });
+
+    // Handle user disconnecting
     socket.on("disconnect", () => {
         console.log(`User ${socket.id} disconnected`);
 
         // Remove the user from the room they were in
         for (const gameId in gameRooms) {
-            gameRooms[gameId] = gameRooms[gameId].filter(
+            gameRooms[gameId].users = gameRooms[gameId].users.filter(
                 (user) => user.id !== socket.id
             );
 
             // Broadcast the updated user list
-            io.to(gameId).emit("update-users", gameRooms[gameId]);
+            io.to(gameId).emit("update-users", gameRooms[gameId].users);
         }
     });
 });
