@@ -1,0 +1,52 @@
+body {
+    padding: 2em;
+}
+
+.main-container {
+    /* background: red; */
+}
+
+.main-header {
+
+}
+/* NEW GAME STATE ==================================================================== */
+
+.create-btn {
+    margin: 3em 0 0 0;
+}
+
+/* PLAYING STATE ==================================================================== */
+
+.mid-container {
+    width: 80%;
+    margin: 0 auto;
+}
+
+.places-list-container {
+    width: 20%;
+}
+
+.map-container {
+    background: lightgray; 
+    height: 6em; 
+    width: 80%; 
+    margin: 0 auto;
+}
+
+.input-container {
+    display: flex; 
+    justify-content: center;
+    width: 80%;
+}
+
+.main-input {
+    padding: 0.75em;
+    width: 95%;
+}
+
+.btn {
+    padding: 0.75em;
+    display: inline-block;
+    border: 1px solid black;
+    border-radius: 0.2em;
+}
