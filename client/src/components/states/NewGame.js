@@ -1,19 +1,26 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import '../../App.css'; 
 
 import Header from "../helpers/Header";
 
 const NewGame = () => {
     const [gameLink, setGameLink] = useState(null); 
+    const navigate = useNavigate(); // Initialize useNavigate
 
-    useEffect(() => { // create a unique game id on render
-        const fetchGameLink = async () => {
-            const link = await createGame(); // Wait for the async function
-            setGameLink(link); // Update the state with the resolved link
-        };
+    const handleCreateGame = async () => {
+        // get new game link
+        const response = await fetch('http://localhost:3001/create_game');
+        const data = await response.json();
+        const link = `http://localhost:3000/game/${data.gameId}`;
 
-        fetchGameLink(); // Call the async function
-    }, [])
+        // Create a new game ID and navigate to the corresponding game link
+        const gameId = link.split('/').pop(); // Extract the gameId from the link
+
+        console.log(link); 
+        console.log(gameId); 
+        navigate(`/game/${gameId}`); // Navigate to the /game/:gameId route
+    };
 
     return (
         <div className="main-container">
@@ -23,21 +30,19 @@ const NewGame = () => {
                 Create a new game
             </button>
 
+            {/* Optionally display the game link */}
+            {gameLink && (
+                <p>
+                    Share this link:{" "}
+                    <a href={gameLink} target="_blank" rel="noopener noreferrer">
+                        {gameLink}
+                    </a>
+                </p>
+            )}
+
             {/* @todo: Create a join option */}
         </div>
-    )
-}
-
-const createGame = async () => {
-    const response = await fetch('http://localhost:3001/create-game');
-    const data = await response.json();
-    const gameLink = `http://localhost:3000/game/${data.gameId}`;
-   
-    return gameLink; 
+    );
 };
-
-const handleCreateGame = () => {
-    console.log("clicked"); 
-}
 
 export default NewGame;

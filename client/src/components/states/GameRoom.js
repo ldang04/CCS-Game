@@ -5,6 +5,7 @@ import { io } from "socket.io-client";
 import '../../App.css'
 
 import Map from "../helpers/Map";
+import Header from "../helpers/Header";
 
 const GameRoom = () => {
     // socket setup 
@@ -33,15 +34,17 @@ const GameRoom = () => {
 
     return (
         <div className="main-container">
-            <p>Current letter: {currentLetter}</p>
+            <Header />
 
             <div className="mid-container">
                 <div className="places-list-container">
-                    
+                    <ul>Previous answers</ul>
                 </div>
                 
                 <Map />
             </div>
+
+            <p>Current letter: {currentLetter}</p>
 
             <div className="input-container">
                 <input
@@ -52,6 +55,9 @@ const GameRoom = () => {
                 />
                 <button className="btn" onClick={() => console.log("clicked")}>Enter</button>
             </div>
+
+            <p>Game ID: {gameId}</p>
+            <p>Share this link to invite others: {`http://localhost:3000/game/${gameId}`}</p>
         </div>
     )
 }

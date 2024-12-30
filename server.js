@@ -2,12 +2,15 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const { v4: uuidv4 } = require('uuid');
 
 const app = express();
 const server = http.createServer(app);
 
 // Allow CORS for Express routes (optional, for REST APIs)
 app.use(cors());
+
+// WEB SOCKET CONFIG ===========================================================================================================================
 
 // Initialize Socket.IO with CORS settings
 const io = new Server(server, {
@@ -17,17 +20,17 @@ const io = new Server(server, {
     },
 });
 
-// Handle Socket.IO connections
+// Handle connections to websocket
 io.on('connection', (socket) => {
-    console.log(`A user connected: ${socket.id}`);
+    console.log('A user connected:', socket.id);
 
-    // welcome to the server! 
-    socket.emit('message', 'Welcome to the server!');
+    // Join a game room
+    socket.on('join-game', (gameId) => {
+        socket.join(gameId);
+        console.log(`User ${socket.id} joined game ${gameId}`);
 
-    socket.on('message', (data) => {
-        console.log(`Message received: ${data}`);
-        io.emit('message', data); // Broadcast to all clients
-
+        // Broadcast to other players in the room
+        socket.to(gameId).emit('user-joined', socket.id);
     });
 
     socket.on('disconnect', () => {
@@ -35,9 +38,14 @@ io.on('connection', (socket) => {
     });
 });
 
-
+// API routes ==============================================================================================================
 app.get("/", (req, res) => {
     res.send("Hello, world!"); 
+});
+
+app.get('/create_game', (req, res) => {
+    const gameId = uuidv4(); // Generate a unique ID for the game
+    res.json({ gameId }); // Send the game ID back to the client
 });
 
 // Start the server

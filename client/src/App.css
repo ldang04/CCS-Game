@@ -18,25 +18,33 @@ body {
 /* PLAYING STATE ==================================================================== */
 
 .mid-container {
+    display: flex; /* Enable Flexbox */
     width: 80%;
     margin: 0 auto;
+    background: red;
+    justify-content: space-between; /* Adjust spacing between children */
+    align-items: stretch; /* Make children stretch vertically to match parent height */
+    height: 25em; /* Ensure the parent has a height for children to stretch */
 }
 
 .places-list-container {
-    width: 20%;
+    flex: 0 0 20%;
+    background: lightblue;
+    height: 100%;
+    overflow-y: scroll;
 }
 
 .map-container {
+    flex: 0 0 80%;
     background: lightgray; 
-    height: 6em; 
-    width: 80%; 
-    margin: 0 auto;
+    height: 25em; 
 }
 
 .input-container {
     display: flex; 
     justify-content: center;
     width: 80%;
+    margin: 0 auto;
 }
 
 .main-input {
