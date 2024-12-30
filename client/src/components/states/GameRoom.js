@@ -1,25 +1,33 @@
-import React, {useState, useEffect} from "react";
-import { useParams } from 'react-router-dom'; 
+import React, { useState, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 
-import '../../App.css'
+import "../../App.css";
 
 import Map from "../helpers/Map";
 import Header from "../helpers/Header";
 
 const GameRoom = () => {
+<<<<<<< HEAD
     // socket setup 
     const { gameId } = useParams(); 
     const [socket, setSocket] = useState(null); 
     const [locations, setLocations] = useState([]); 
+=======
+	// socket setup
+	const { gameId } = useParams();
+	const [socket, setSocket] = useState(null);
+>>>>>>> e5ad8c684f2d7249e2e4eb66b50d62d7599e6ee4
 
-    const [currentLetter, setCurrentLetter] = useState("A"); 
-    const [input, setInput] = useState('');
-    const [answerList, setAnswerList] = useState([]); 
+	const [currentLetter, setCurrentLetter] = useState("A");
+	const [input, setInput] = useState("");
+	const [answerList, setAnswerList] = useState([]);
 
-    useEffect(() => { // connect to socket
-        const socket = io('http://localhost:3001'); // Connect to WebSocket server
+	useEffect(() => {
+		// connect to socket
+		const socket = io("http://localhost:3001"); // Connect to WebSocket server
 
+<<<<<<< HEAD
         // Listen for updates to the locations list
         socket.on("update-locations", (updatedLocations) => {
             setLocations(updatedLocations); // Update the local state with the new list
@@ -27,11 +35,16 @@ const GameRoom = () => {
 
         socket.emit('join-room', gameId); // Join the WebSocket room
         setSocket(socket);
+=======
+		socket.emit("join-room", gameId); // Join the WebSocket room
+		setSocket(socket);
+>>>>>>> e5ad8c684f2d7249e2e4eb66b50d62d7599e6ee4
 
-        socket.on('message', (message) => {
-            console.log(`Message from room ${gameId}:`, message);
-        });
+		socket.on("message", (message) => {
+			console.log(`Message from room ${gameId}:`, message);
+		});
 
+<<<<<<< HEAD
          // Update the current letter when the server broadcasts a change
         socket.on("update-current-letter", (newLetter) => {
             setCurrentLetter(newLetter); // Update the state with the new letter
@@ -79,9 +92,27 @@ const GameRoom = () => {
                 
                 <Map />
             </div>
+=======
+		// Cleanup on component unmount
+		return () => {
+			socket.disconnect();
+		};
+	}, []);
 
-            <p>Current letter: {currentLetter}</p>
+	return (
+		<div className="main-container">
+			<Header />
 
+			<div className="mid-container">
+				<div className="places-list-container">
+					<ul>Previous answers</ul>
+				</div>
+>>>>>>> e5ad8c684f2d7249e2e4eb66b50d62d7599e6ee4
+
+				<Map />
+			</div>
+
+<<<<<<< HEAD
             <div className="input-container">
                 <input
                     className="main-input"
@@ -91,11 +122,29 @@ const GameRoom = () => {
                 />
                 <button className="btn" onClick={handleLocationEnter}>Enter</button>
             </div>
+=======
+			<p>Current letter: {currentLetter}</p>
+>>>>>>> e5ad8c684f2d7249e2e4eb66b50d62d7599e6ee4
 
-            <p>Game ID: {gameId}</p>
-            <p>Share this link to invite others: {`http://localhost:3000/game/${gameId}`}</p>
-        </div>
-    )
-}
+			<div className="input-container">
+				<input
+					className="main-input"
+					type="text"
+					value={input}
+					onChange={(e) => setInput(e.target.value)}
+				/>
+				<button className="btn" onClick={() => console.log("clicked")}>
+					Enter
+				</button>
+			</div>
+
+			<p>Game ID: {gameId}</p>
+			<p>
+				Share this link to invite others:{" "}
+				{`http://localhost:3000/game/${gameId}`}
+			</p>
+		</div>
+	);
+};
 
 export default GameRoom;
