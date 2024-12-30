@@ -76,6 +76,7 @@ const GameRoom = () => {
                 <Map />
             </div>
 
+            <p>Current letter: {currentLetter} </p>
             <div className="input-container">
                 <input
                     className="main-input"
@@ -87,7 +88,7 @@ const GameRoom = () => {
                     Enter
                 </button>
             </div>
-
+            
             <p>Game ID: {gameId}</p>
             <p>Share this link to invite others: {`http://localhost:3000/game/${gameId}`}</p>
         </div>
