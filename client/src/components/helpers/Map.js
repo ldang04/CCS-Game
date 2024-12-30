@@ -10,10 +10,9 @@ const Map = () => {
 	return (
         <div className="map-container" style={{ height: "100%", width: "100%" }}>
                 <MapContainer center={position} zoom={zoomLevel} style={{ height: "100%", width: "100%" }}>
-                    {/* TileLayer defines the map tiles (e.g., OpenStreetMap) */}
                     <TileLayer
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
+                        attribution="&copy; <a href='https://carto.com/attributions'>CartoDB</a>"
                     />
                     {/* Marker to show on the map */}
                     <Marker position={position}>
