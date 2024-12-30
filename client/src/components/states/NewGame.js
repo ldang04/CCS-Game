@@ -5,7 +5,7 @@ import '../../App.css';
 import Header from "../helpers/Header";
 
 const NewGame = () => {
-    const [gameLink, setGameLink] = useState(null); 
+    const [input, setInput] = useState(""); 
     const navigate = useNavigate(); // Initialize useNavigate
 
     const handleCreateGame = async () => {
@@ -22,6 +22,10 @@ const NewGame = () => {
         navigate(`/game/${gameId}`); // Navigate to the /game/:gameId route
     };
 
+    const handleJoin = () => {
+        navigate(`/game/${input}`)
+    }
+
     return (
         <div className="main-container">
             <Header />
@@ -30,17 +34,18 @@ const NewGame = () => {
                 Create a new game
             </button>
 
-            {/* Optionally display the game link */}
-            {gameLink && (
-                <p>
-                    Share this link:{" "}
-                    <a href={gameLink} target="_blank" rel="noopener noreferrer">
-                        {gameLink}
-                    </a>
-                </p>
-            )}
+            <div className="join-container">
+                <input
+                        className="join-input"
+                        placeholder="Game code"
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                    />
 
-            {/* @todo: Create a join option */}
+                {/* @todo: room validation function  */}
+                <button className="btn" onClick={handleJoin}>Join</button>
+            </div>
         </div>
     );
 };

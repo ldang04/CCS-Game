@@ -20,21 +20,49 @@ const io = new Server(server, {
     },
 });
 
+const gameRooms = {}; // Store locations for each game room
+
 // Handle connections to websocket
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    // Join a game room
-    socket.on('join-game', (gameId) => {
+    // Join room
+    socket.on("join-room", (gameId) => {
         socket.join(gameId);
-        console.log(`User ${socket.id} joined game ${gameId}`);
+        console.log(`User ${socket.id} joined room ${gameId}`);
 
-        // Broadcast to other players in the room
-        socket.to(gameId).emit('user-joined', socket.id);
+        // Send the current locations to the newly joined user
+        if (gameRooms[gameId]) {
+            socket.emit("update-locations", gameRooms[gameId]);
+        } else {
+            gameRooms[gameId] = []; // Initialize the room if it doesn't exist
+        }
     });
 
-    socket.on('disconnect', () => {
-        console.log(`User disconnected: ${socket.id}`);
+    // Add location to a room
+    socket.on("add-location", ({ gameId, location }) => {
+        if (!gameRooms[gameId]) {
+            gameRooms[gameId] = [];
+        }
+
+        // Add the location to the list and broadcast to all users in the room
+        gameRooms[gameId].push(location);
+        io.to(gameId).emit("update-locations", gameRooms[gameId]);
+    });
+
+    // Change the current letter
+    socket.on("change-current", ({ gameId, letter }) => {
+        if (!gameRooms[gameId]) {
+            gameRooms[gameId] = []; // Initialize room if it doesn't exist
+        }
+    
+        // Broadcast the new current letter to all users in the room
+        io.to(gameId).emit("update-current-letter", letter);
+    });
+
+    // Disconnect
+    socket.on("disconnect", () => {
+        console.log(`User ${socket.id} disconnected`);
     });
 });
 

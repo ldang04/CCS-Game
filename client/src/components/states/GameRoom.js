@@ -11,6 +11,7 @@ const GameRoom = () => {
     // socket setup 
     const { gameId } = useParams(); 
     const [socket, setSocket] = useState(null); 
+    const [locations, setLocations] = useState([]); 
 
     const [currentLetter, setCurrentLetter] = useState("A"); 
     const [input, setInput] = useState('');
@@ -19,6 +20,11 @@ const GameRoom = () => {
     useEffect(() => { // connect to socket
         const socket = io('http://localhost:3001'); // Connect to WebSocket server
 
+        // Listen for updates to the locations list
+        socket.on("update-locations", (updatedLocations) => {
+            setLocations(updatedLocations); // Update the local state with the new list
+        });
+
         socket.emit('join-room', gameId); // Join the WebSocket room
         setSocket(socket);
 
@@ -26,11 +32,37 @@ const GameRoom = () => {
             console.log(`Message from room ${gameId}:`, message);
         });
 
+         // Update the current letter when the server broadcasts a change
+        socket.on("update-current-letter", (newLetter) => {
+            setCurrentLetter(newLetter); // Update the state with the new letter
+        });
+        
         // Cleanup on component unmount
         return () => {
             socket.disconnect();
         };
     }, []); 
+
+    const handleLocationEnter = () => {
+        if (!input.trim()) return; // Prevent empty inputs
+        if (input[0].toUpperCase() !== currentLetter) {
+            alert(`Your answer must start with the letter "${currentLetter}"`);
+            return;
+        }
+
+        // Emit the new location to the server
+        socket.emit("add-location", { gameId, location: input });
+
+         // Calculate the new current letter
+        const lastLetter = input[input.length - 1].toUpperCase();
+
+        // Emit the new current letter to the server
+        socket.emit("change-current", { gameId, letter: lastLetter });
+
+        
+        // Clear the input field
+        setInput("");
+    }
 
     return (
         <div className="main-container">
@@ -39,6 +71,10 @@ const GameRoom = () => {
             <div className="mid-container">
                 <div className="places-list-container">
                     <ul>Previous answers</ul>
+
+                    {locations.map((location, index) => (
+                        <li key={index}>{location}</li>
+                    ))}
                 </div>
                 
                 <Map />
@@ -53,7 +89,7 @@ const GameRoom = () => {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                 />
-                <button className="btn" onClick={() => console.log("clicked")}>Enter</button>
+                <button className="btn" onClick={handleLocationEnter}>Enter</button>
             </div>
 
             <p>Game ID: {gameId}</p>
