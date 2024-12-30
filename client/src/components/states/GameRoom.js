@@ -13,37 +13,50 @@ const GameRoom = () => {
     const [locations, setLocations] = useState([]);
     const [currentLetter, setCurrentLetter] = useState("A");
     const [input, setInput] = useState("");
+    const [userName, setUserName] = useState("");
+    const [isJoined, setIsJoined] = useState(false); // Track if the user has joined the room
+    const [users, setUsers] = useState([]); // List of users in the room
 
     useEffect(() => {
-        // Connect to socket
         const socket = io("http://localhost:3001"); // Connect to WebSocket server
+        setSocket(socket);
 
         // Listen for updates to the locations list
         socket.on("update-locations", (updatedLocations) => {
-            setLocations(updatedLocations); // Update the local state with the new list
+            setLocations(updatedLocations);
         });
 
-        socket.emit("join-room", gameId); // Join the WebSocket room
-        setSocket(socket);
-
-        // Listen for messages
-        socket.on("message", (message) => {
-            console.log(`Message from room ${gameId}:`, message);
+        // Listen for updates to the user list
+        socket.on("update-users", (updatedUsers) => {
+            setUsers(updatedUsers); // Update the list of users
         });
 
-        // Update the current letter when the server broadcasts a change
+        // Listen for changes to the current letter
         socket.on("update-current-letter", (newLetter) => {
-            setCurrentLetter(newLetter); // Update the state with the new letter
+            setCurrentLetter(newLetter);
         });
 
-        // Cleanup on component unmount
         return () => {
             socket.disconnect();
         };
     }, [gameId]);
 
+    const handleJoinRoom = () => {
+        if (!userName.trim()) {
+            alert("Please enter your name.");
+            return;
+        }
+
+        // Emit the join-room event with the gameId and userName
+        socket.emit("join-room", { gameId, userName });
+
+        // Set the joined status to true
+        setIsJoined(true);
+    };
+
     const handleLocationEnter = () => {
-        if (!input.trim()) return; // Prevent empty inputs
+        if (!input.trim()) return;
+
         if (input[0].toUpperCase() !== currentLetter) {
             alert(`Your answer must start with the letter "${currentLetter}"`);
             return;
@@ -52,13 +65,10 @@ const GameRoom = () => {
         // Emit the new location to the server
         socket.emit("add-location", { gameId, location: input });
 
-        // Calculate the new current letter
-        const lastLetter = input[input.length - 1].toUpperCase();
-
         // Emit the new current letter to the server
+        const lastLetter = input[input.length - 1].toUpperCase();
         socket.emit("change-current", { gameId, letter: lastLetter });
 
-        // Clear the input field
         setInput("");
     };
 
@@ -66,30 +76,57 @@ const GameRoom = () => {
         <div className="main-container">
             <Header />
 
-            <div className="mid-container">
-                <div className="places-list-container">
-                    <ul>Previous answers:</ul>
-                    {locations.map((location, index) => (
-                        <li key={index}>{location}</li>
-                    ))}
+            {!isJoined ? ( // Check if the user has joined the room
+                <div className="join-container input">
+                    <input
+                        type="text"
+                        placeholder="Enter your name"
+                        value={userName}
+                        onChange={(e) => setUserName(e.target.value)}
+                    />
+                    <button onClick={handleJoinRoom}>Join Room</button>
                 </div>
-                <Map />
-            </div>
+            ) : (
+                <>
+                    <div className="users-container">
+                        <h3>Users in Room:</h3>
+                        <ul>
+                            {users.map((user) => (
+                                <li key={user.id}>{user.name}</li>
+                            ))}
+                        </ul>
+                    </div>
 
-            <div className="input-container">
-                <input
-                    className="main-input"
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                />
-                <button className="btn" onClick={handleLocationEnter}>
-                    Enter
-                </button>
-            </div>
+                    <div className="mid-container">
+                        <div className="places-list-container">
+                            <ul>
+                                <li>Previous answers:</li>
+                                {locations.map((location, index) => (
+                                    <li key={index}>{location}</li>
+                                ))}
+                            </ul>
+                        </div>
+                        <Map />
+                    </div>
 
-            <p>Game ID: {gameId}</p>
-            <p>Share this link to invite others: {`http://localhost:3000/game/${gameId}`}</p>
+                    <p>Current letter: {currentLetter}</p>
+
+                    <div className="input-container">
+                        <input
+                            className="main-input"
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                        />
+                        <button className="btn" onClick={handleLocationEnter}>
+                            Enter
+                        </button>
+                    </div>
+
+                    <p>Game ID: {gameId}</p>
+                    <p>Share this link to invite others: {`http://localhost:3000/game/${gameId}`}</p>
+                </>
+            )}
         </div>
     );
 };
