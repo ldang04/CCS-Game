@@ -28,15 +28,16 @@ io.on("connection", (socket) => {
     // Handle user joining a room
     socket.on("join-room", ({ gameId, userName }) => {
         if (!gameRooms[gameId]) {
-            gameRooms[gameId] = { users: [], locations: [], currentLetter: "A" };
+            gameRooms[gameId] = { users: [], locations: [], currentLetter: "A", currentTurnIndex: 0 };
         }
 
         // Add the user to the room
         gameRooms[gameId].users.push({ id: socket.id, name: userName });
         socket.join(gameId);
 
-        // Broadcast the updated user list to everyone in the room
+        // Broadcast the updated user list and turn info
         io.to(gameId).emit("update-users", gameRooms[gameId].users);
+        io.to(gameId).emit("update-turn", gameRooms[gameId].users[gameRooms[gameId].currentTurnIndex]);
 
         console.log(`User ${userName} joined room ${gameId}`);
     });
@@ -45,11 +46,17 @@ io.on("connection", (socket) => {
     socket.on("add-location", ({ gameId, location }) => {
         if (!gameRooms[gameId]) return;
 
-        // Add the location to the room's location list
-        gameRooms[gameId].locations.push(location);
+        const room = gameRooms[gameId];
 
-        // Broadcast the updated locations list to everyone in the room
-        io.to(gameId).emit("update-locations", gameRooms[gameId].locations);
+        // Add the location to the room's location list
+        room.locations.push(location);
+
+        // Advance to the next turn
+        room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
+
+        // Broadcast the updated locations list and next turn
+        io.to(gameId).emit("update-locations", room.locations);
+        io.to(gameId).emit("update-turn", room.users[room.currentTurnIndex]);
 
         console.log(`Location added in room ${gameId}: ${location}`);
     });
@@ -61,7 +68,7 @@ io.on("connection", (socket) => {
         // Update the current letter for the room
         gameRooms[gameId].currentLetter = letter;
 
-        // Broadcast the updated current letter to everyone in the room
+        // Broadcast the updated current letter
         io.to(gameId).emit("update-current-letter", letter);
 
         console.log(`Current letter updated in room ${gameId}: ${letter}`);
@@ -73,12 +80,21 @@ io.on("connection", (socket) => {
 
         // Remove the user from the room they were in
         for (const gameId in gameRooms) {
-            gameRooms[gameId].users = gameRooms[gameId].users.filter(
-                (user) => user.id !== socket.id
-            );
+            const room = gameRooms[gameId];
+            const userIndex = room.users.findIndex((user) => user.id === socket.id);
 
-            // Broadcast the updated user list
-            io.to(gameId).emit("update-users", gameRooms[gameId].users);
+            if (userIndex !== -1) {
+                room.users.splice(userIndex, 1);
+
+                // Adjust the current turn index if necessary
+                if (room.currentTurnIndex >= userIndex) {
+                    room.currentTurnIndex = (room.currentTurnIndex - 1 + room.users.length) % room.users.length;
+                }
+
+                // Broadcast the updated user list and turn
+                io.to(gameId).emit("update-users", room.users);
+                io.to(gameId).emit("update-turn", room.users[room.currentTurnIndex]);
+            }
         }
     });
 });

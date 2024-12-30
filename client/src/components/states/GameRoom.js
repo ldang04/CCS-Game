@@ -14,8 +14,9 @@ const GameRoom = () => {
     const [currentLetter, setCurrentLetter] = useState("A");
     const [input, setInput] = useState("");
     const [userName, setUserName] = useState("");
-    const [isJoined, setIsJoined] = useState(false); // Track if the user has joined the room
+    const [isJoined, setIsJoined] = useState(false);
     const [users, setUsers] = useState([]); // List of users in the room
+    const [currentTurn, setCurrentTurn] = useState(null); // User whose turn it is
 
     useEffect(() => {
         const socket = io("http://localhost:3001"); // Connect to WebSocket server
@@ -28,12 +29,17 @@ const GameRoom = () => {
 
         // Listen for updates to the user list
         socket.on("update-users", (updatedUsers) => {
-            setUsers(updatedUsers); // Update the list of users
+            setUsers(updatedUsers);
         });
 
         // Listen for changes to the current letter
         socket.on("update-current-letter", (newLetter) => {
             setCurrentLetter(newLetter);
+        });
+
+        // Listen for turn updates
+        socket.on("update-turn", (turnUser) => {
+            setCurrentTurn(turnUser);
         });
 
         return () => {
@@ -76,7 +82,7 @@ const GameRoom = () => {
         <div className="main-container">
             <Header />
 
-            {!isJoined ? ( // Check if the user has joined the room
+            {!isJoined ? (
                 <div className="join-container input">
                     <input
                         type="text"
@@ -89,10 +95,12 @@ const GameRoom = () => {
             ) : (
                 <>
                     <div className="users-container">
-                        <h3>Users in Room:</h3>
+                        <h3>Players:</h3>
                         <ul>
                             {users.map((user) => (
-                                <li key={user.id}>{user.name}</li>
+                                <li key={user.id} style={{ fontWeight: user.id === currentTurn?.id ? "bold" : "normal" }}>
+                                    {user.name}
+                                </li>
                             ))}
                         </ul>
                     </div>
@@ -109,7 +117,10 @@ const GameRoom = () => {
                         <Map />
                     </div>
 
-                    <p>Current letter: {currentLetter}</p>
+                    <p>
+                        Current letter: {currentLetter},{" "}
+                        {currentTurn?.id === socket.id ? "Your turn" : `${currentTurn?.name}'s turn`}
+                    </p>
 
                     <div className="input-container">
                         <input
@@ -117,8 +128,13 @@ const GameRoom = () => {
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
+                            disabled={currentTurn?.id !== socket.id} // Disable input if not user's turn
                         />
-                        <button className="btn" onClick={handleLocationEnter}>
+                        <button
+                            className="btn"
+                            onClick={handleLocationEnter}
+                            disabled={currentTurn?.id !== socket.id} // Disable button if not user's turn
+                        >
                             Enter
                         </button>
                     </div>
