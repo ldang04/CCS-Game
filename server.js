@@ -20,49 +20,38 @@ const io = new Server(server, {
     },
 });
 
-const gameRooms = {}; // Store locations for each game room
+const gameRooms = {}; // Store users for each room
 
-// Handle connections to websocket
-io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
+io.on("connection", (socket) => {
+    console.log("A user connected:", socket.id);
 
-    // Join room
-    socket.on("join-room", (gameId) => {
-        socket.join(gameId);
-        console.log(`User ${socket.id} joined room ${gameId}`);
-
-        // Send the current locations to the newly joined user
-        if (gameRooms[gameId]) {
-            socket.emit("update-locations", gameRooms[gameId]);
-        } else {
-            gameRooms[gameId] = []; // Initialize the room if it doesn't exist
-        }
-    });
-
-    // Add location to a room
-    socket.on("add-location", ({ gameId, location }) => {
+    socket.on("join-room", ({ gameId, userName }) => {
         if (!gameRooms[gameId]) {
             gameRooms[gameId] = [];
         }
 
-        // Add the location to the list and broadcast to all users in the room
-        gameRooms[gameId].push(location);
-        io.to(gameId).emit("update-locations", gameRooms[gameId]);
+        // Add the user to the room
+        gameRooms[gameId].push({ id: socket.id, name: userName });
+        socket.join(gameId);
+
+        // Broadcast the updated user list to everyone in the room
+        io.to(gameId).emit("update-users", gameRooms[gameId]);
+
+        console.log(`User ${userName} joined room ${gameId}`);
     });
 
-    // Change the current letter
-    socket.on("change-current", ({ gameId, letter }) => {
-        if (!gameRooms[gameId]) {
-            gameRooms[gameId] = []; // Initialize room if it doesn't exist
-        }
-    
-        // Broadcast the new current letter to all users in the room
-        io.to(gameId).emit("update-current-letter", letter);
-    });
-
-    // Disconnect
     socket.on("disconnect", () => {
         console.log(`User ${socket.id} disconnected`);
+
+        // Remove the user from the room they were in
+        for (const gameId in gameRooms) {
+            gameRooms[gameId] = gameRooms[gameId].filter(
+                (user) => user.id !== socket.id
+            );
+
+            // Broadcast the updated user list
+            io.to(gameId).emit("update-users", gameRooms[gameId]);
+        }
     });
 });
 
