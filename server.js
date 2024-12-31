@@ -64,10 +64,17 @@ io.on("connection", (socket) => {
     
         if (validationResponse.success) {
             const room = gameRooms[gameId];
+            const locationData = validationResponse.location_data;
     
             // Add the location to the room's location list
-            const location_data = validationResponse.location_data;
-            room.locations.push(location_data.name_standard);
+            room.locations.push(locationData.name_standard);
+    
+            // Calculate the new current letter
+            const lastLetter = locationData.name_standard.slice(-1).toUpperCase();
+    
+            // Update the current letter for the room
+            room.currentLetter = lastLetter;
+            io.to(gameId).emit("update-current-letter", lastLetter); // Emit only on success
     
             // Advance to the next turn
             room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
@@ -84,7 +91,7 @@ io.on("connection", (socket) => {
             console.log(validationResponse.message);
         }
     });
-
+    
     // Handle changing the current letter
     socket.on("change-current", ({ gameId, letter }) => {
         if (!gameRooms[gameId]) return;

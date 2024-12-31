@@ -51,7 +51,7 @@ const GameRoom = () => {
             }
         };
     }, [socket]);
-    
+
     useEffect(() => {
         // Prompt for nickname only once
         if (!nicknameRef.current.trim()) {
@@ -109,29 +109,8 @@ const GameRoom = () => {
         socket.emit("add-location", { gameId, location: input });
     
         // Clear the input field immediately
-        setInput("");
+        setInput(""); 
     };
-    
-
-    const validateLocation = async (gameId, location) => {
-        try {
-            const response = await fetch("http://localhost:3001/validate_location", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ gameId, location }), // Send gameId and location as the payload
-            });
-            
-            const data = await response.json(); 
-            
-            return data;
-        } catch (error) {
-            console.error("Error validating location:", error);
-            return null;
-        }
-    };
-
     return (
         <div className="main-container-game">
             <Header />
