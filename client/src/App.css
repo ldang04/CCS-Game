@@ -6,12 +6,29 @@ h1 {
     font-family: "Fredoka";
     font-size: 3.5em;
 }
+
 .main-container {
-    /* background: red; */
+    display: flex;
+    justify-content: center;
+    width: 60%;
+    margin: 0 auto;
+}
+
+.main-container-game {
+ 
+}
+
+.main-left {
+    flex: 0 0 50%; 
+    border-right: 1px solid gray;
+}
+
+.main-right {
+    flex: 0 0 50%; 
 }
 
 .header-container {
-    margin: 0 0 1em 0 ;
+    margin: 0 0 2em 0 ;
 }
 /* NEW GAME STATE ==================================================================== */
 
@@ -64,6 +81,7 @@ h1 {
     flex: 0 0 15%;
     height: 100%;
     overflow-y: scroll;
+    padding: 0 0.5em 0 0;
 }
 
 .map-container {
@@ -77,7 +95,7 @@ h1 {
     font-family: "Fredoka"; 
     border: 2px solid gray;
     border-radius: 0.5em;
-    margin: 0 0.2em 0.2em 0;
+    margin: 0 0.2em 0 0;
 }
 
 .li-header {
@@ -89,9 +107,10 @@ h1 {
 
 .places-list-container {
     flex: 0 0 15%;
-    background: lightblue;
+    background: #3D3BF3;
     height: 100%;
     overflow-y: scroll;
+    color: white;
 }
 
 

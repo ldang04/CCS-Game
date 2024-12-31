@@ -26,25 +26,32 @@ io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
     // Handle user joining a room
-    socket.on("join-room", ({ gameId, nickname }) => {
+    socket.on("join-room", ({ gameId, nickname, time, lives }) => {
+        // Check if the room exists
         if (!gameRooms[gameId]) {
-            gameRooms[gameId] = { users: [], locations: [], currentLetter: "A", currentTurnIndex: 0 };
+            // Create a new room with the provided time and lives or default values
+            gameRooms[gameId] = { 
+                users: [], 
+                locations: [], 
+                currentLetter: "A", 
+                currentTurnIndex: 0, 
+                time: time ?? 60, // Use provided time or default to 60
+                lives: lives ?? 3  // Use provided lives or default to 3
+            };
         }
     
-        // Add the user to the room with an id and nickname
-        const user = { id: socket.id, name: nickname };
+        // Add the user to the room
+        const user = { id: socket.id, name: nickname, lives: gameRooms[gameId].lives };
         gameRooms[gameId].users.push(user);
         socket.join(gameId);
     
-        // Broadcast the updated user list to everyone in the room
+        // Broadcast the updated user list and turn to the room
         io.to(gameId).emit("update-users", gameRooms[gameId].users);
-    
-        // Always broadcast the current turn user
-        const currentTurnUser = gameRooms[gameId].users[gameRooms[gameId].currentTurnIndex];
-        io.to(gameId).emit("update-turn", currentTurnUser);
+        io.to(gameId).emit("update-turn", gameRooms[gameId].users[gameRooms[gameId].currentTurnIndex]);
     
         console.log(`User ${nickname} joined room ${gameId}`);
     });
+    
 
     // Handle adding a location
     socket.on("add-location", ({ gameId, location }) => {

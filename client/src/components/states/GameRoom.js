@@ -102,7 +102,7 @@ const GameRoom = () => {
     };
 
     return (
-        <div className="main-container">
+        <div className="main-container-game">
             <Header />
 
             {!isJoined ? (
@@ -123,7 +123,7 @@ const GameRoom = () => {
 
                         <Map />
                         <div className="places-list-container">
-                            <ul>
+                            <ul id="previous-ul">
                                 <li className="li-header">Previous:</li>
                                 {locations.map((location, index) => (
                                     <li key={index}>{location}</li>
@@ -148,12 +148,13 @@ const GameRoom = () => {
                                     handleLocationEnter()
                                 }
                             }}
+                            placeholder={`Enter a location starting with "${currentLetter}"`}
                             disabled={currentTurn?.id !== socket?.id} // Disable input if not user's turn
                         />
                     </div>
 
                     <p>
-                    Game ID: {gameId}{" "}
+                    Join code: {gameId}{" "}
                     <button onClick={handleCopyGameId} className="copy-btn">{copyIdSuccess ? "✅" : "🔗"}</button>
                 </p>
 

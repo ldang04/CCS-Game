@@ -7,6 +7,9 @@ import Header from "../helpers/Header";
 const NewGame = () => {
     const [input, setInput] = useState(""); 
     const [nickname, setNickname] = useState("");
+    const [lives, setLives] = useState(3); 
+    const [time, setTime] = useState(30); 
+
     const navigate = useNavigate(); // Initialize useNavigate
 
     const handleCreateGame = async () => {
@@ -46,46 +49,87 @@ const NewGame = () => {
         }
     };
 
+    const handleTimeChange = (e) => {
+        const newValue = parseInt(e.target.value, 10);
+        setTime(Number.isNaN(newValue) || newValue < 1 ? 1 : newValue);
+    };
+
+    const handleLivesChange = (e) => {
+        const newValue = parseInt(e.target.value, 10);
+        setLives(Number.isNaN(newValue) ? 0 : newValue);
+    }
+
     return (
-        <div className="main-container">
+        <div>
             <Header />
+            <div className="main-container">
 
-            <div className="join-container">
-                <p>Nickname:</p>
-                <input
-                        className="join-input"
-                        type="text"
-                        value={nickname}
-                        onChange={(e) => setNickname(e.target.value)}
-                        onKeyDown={(e) => {
-                            if(e.key === "Enter"){
-                                setNickname(nickname)
-                            }
-                        }}
-                    />
+                <div className="main-left">
+                    <div>
+                        <div className="join-container">
+                            <p>Nickname:</p>
+                            <input
+                                    className="join-input"
+                                    type="text"
+                                    value={nickname}
+                                    onChange={(e) => setNickname(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if(e.key === "Enter"){
+                                            setNickname(nickname)
+                                        }
+                                    }}
+                                />
+                        </div>
+
+                        <div className="join-container">
+                            <p>Join code:</p>
+                            <input
+                                    className="join-input"
+                                    type="text"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if(e.key === "Enter"){
+                                            handleJoin()
+                                        }
+                                    }}
+                                />
+                        </div>
+                        
+                        <h3> OR </h3>
+
+                        <button className="btn" id="create-btn" onClick={handleCreateGame}>
+                            Create a new game
+                        </button>
+                    </div>
+                </div>
+                <div className="main-right">
+                    <div className="join-container">
+                        <p>Time per turn (secs)</p>
+                        <input 
+                            type="number"
+                            value={time}
+                            onChange={handleTimeChange}
+                            className="join-input number-input"
+                            step="30"
+                            min="0"
+                        />
+
+                    </div>
+
+                    <div className="join-container">
+                        <p>Lives</p>
+                        <input 
+                            type="number"
+                            value={lives}
+                            onChange={handleLivesChange}
+                            className="join-input number-input"
+                            min="0"
+                        />
+
+                    </div>
+                </div>
             </div>
-
-            <div className="join-container">
-                <p>Join code:</p>
-                <input
-                        className="join-input"
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => {
-                            if(e.key === "Enter"){
-                                handleJoin()
-                            }
-                        }}
-                    />
-
-                {/* @todo: room validation function  */}
-            </div>
-            
-            <h3> OR </h3>
-            <button className="btn" id="create-btn" onClick={handleCreateGame}>
-                Create a new game
-            </button>
         </div>
     );
 };
