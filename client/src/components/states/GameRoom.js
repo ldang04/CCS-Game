@@ -39,6 +39,20 @@ const GameRoom = () => {
     };
 
     useEffect(() => {
+        if (socket) {
+            socket.on("location-error", (message) => {
+                alert(message); // Show the error message
+            });
+        }
+    
+        return () => {
+            if (socket) {
+                socket.off("location-error");
+            }
+        };
+    }, [socket]);
+    
+    useEffect(() => {
         // Prompt for nickname only once
         if (!nicknameRef.current.trim()) {
             let userNickname = "";
@@ -85,20 +99,37 @@ const GameRoom = () => {
 
     const handleLocationEnter = () => {
         if (!input.trim()) return;
-
+    
         if (input[0].toUpperCase() !== currentLetter) {
             alert(`Your answer must start with the letter "${currentLetter}"`);
             return;
         }
-
+    
         // Emit the new location to the server
         socket.emit("add-location", { gameId, location: input });
-
-        // Emit the new current letter to the server
-        const lastLetter = input[input.length - 1].toUpperCase();
-        socket.emit("change-current", { gameId, letter: lastLetter });
-
+    
+        // Clear the input field immediately
         setInput("");
+    };
+    
+
+    const validateLocation = async (gameId, location) => {
+        try {
+            const response = await fetch("http://localhost:3001/validate_location", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ gameId, location }), // Send gameId and location as the payload
+            });
+            
+            const data = await response.json(); 
+            
+            return data;
+        } catch (error) {
+            console.error("Error validating location:", error);
+            return null;
+        }
     };
 
     return (

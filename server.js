@@ -3,12 +3,15 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
+const stringSimilarity = require("string-similarity");
 
 const app = express();
 const server = http.createServer(app);
 
 // Allow CORS for Express routes (optional, for REST APIs)
 app.use(cors());
+app.use(express.json()); // For parsing application/json
+app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
 
 // WEB SOCKET CONFIG ===========================================================================================================================
 
@@ -29,14 +32,14 @@ io.on("connection", (socket) => {
     socket.on("join-room", ({ gameId, nickname, time, lives }) => {
         // Check if the room exists
         if (!gameRooms[gameId]) {
-            // Create a new room with the provided time and lives or default values
             gameRooms[gameId] = { 
                 users: [], 
                 locations: [], 
                 currentLetter: "A", 
                 currentTurnIndex: 0, 
-                time: time ?? 60, // Use provided time or default to 60
-                lives: lives ?? 3  // Use provided lives or default to 3
+                time: time ?? 60, 
+                lives: lives ?? 3,
+                guessedLocations: new Set() // Track guessed locations for this room
             };
         }
     
@@ -52,48 +55,20 @@ io.on("connection", (socket) => {
         console.log(`User ${nickname} joined room ${gameId}`);
     });
     
-
-    // Before adding location, valdiate answer. 
-    const stringSimilarity = require("string-similarity");
-
-    function validateLocation(input) {
-        // Normalize input to format of locationMap key. 
-        const inputName = input.toLowerCase().trim();
-    
-        // Find the closest match in the hashmap. Parse thru all keys. 
-        const keys = Array.from(locationsMap.keys());
-        const { bestMatch } = stringSimilarity.findBestMatch(inputName, keys);
-    
-        if (bestMatch.rating > 0.8) { // Threshold for similarity set at 0.8. 
-            const location = locationsMap.get(bestMatch.target);
-    
-            if (location.isGuessed) {
-                return { success: false, message: `"${bestMatch.target}" has already been guessed!` };
-            } else {
-                // Mark the location as guessed and return it
-                location.isGuessed = true;
-                return { success: true, location_data: location };
-            }
-        } else {
-            return { success: false, message: `"${input}" is not a valid location!` };
-        }
-    }
-    
     // Handle adding a location
     socket.on("add-location", ({ gameId, location }) => {
         if (!gameRooms[gameId]) return;
-        
-        // Returns success if guess is valid. 
-        const validationResponse = validateLocation(location);
-        
+    
+        // Validate the location within the context of the room
+        const validationResponse = validateLocation(location, gameId);
+    
         if (validationResponse.success) {
             const room = gameRooms[gameId];
-
+    
             // Add the location to the room's location list
-            // In this case, we want the standard naming of the location, and not the raw guess, to be added to the locations list. 
             const location_data = validationResponse.location_data;
             room.locations.push(location_data.name_standard);
-            
+    
             // Advance to the next turn
             room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
             const nextTurnUser = room.users[room.currentTurnIndex];
@@ -103,8 +78,11 @@ io.on("connection", (socket) => {
             io.to(gameId).emit("update-turn", nextTurnUser);
     
             console.log(`Location added in room ${gameId}: ${location}`);
+        } else {
+            // Send error back to the user
+            socket.emit("location-error", validationResponse.message);
+            console.log(validationResponse.message);
         }
-
     });
 
     // Handle changing the current letter
@@ -192,7 +170,7 @@ function loadLocations(csvFilePath) {
 const locationsCSVFilePath = "client/public/datasets/cleaned_CCS_dataset.csv";
 
 loadLocations(locationsCSVFilePath).then(() => {
-    console.log('Locations loaded into hashmap:', locationsMap);
+    // console.log('Locations loaded into hashmap:', locationsMap);
 });
 
 
@@ -212,6 +190,44 @@ app.get('/check-room/:roomId', (req, res) => {
     res.json({ exists: roomExists });
 });
 
+
+function validateLocation(input, gameId) { 
+    // Normalize input to format of locationsMap key
+    const inputName = input.toLowerCase().trim();
+
+    // Find the closest match in the hashmap
+    const keys = Array.from(locationsMap.keys());
+    const { bestMatch } = stringSimilarity.findBestMatch(inputName, keys);
+
+    if (bestMatch.rating > 0.95) { // Threshold for similarity set at 0.95
+        const location = locationsMap.get(bestMatch.target);
+
+        // Check if the location has already been guessed in this room
+        const guessedLocations = gameRooms[gameId]?.guessedLocations;
+        if (guessedLocations?.has(bestMatch.target)) {
+            return { success: false, message: `"${bestMatch.target}" has already been guessed!` };
+        } else {
+            // Mark the location as guessed for this specific room
+            guessedLocations?.add(bestMatch.target);
+            return { success: true, location_data: location };
+        }
+    } else {
+        return { success: false, message: `"${input}" is not a valid location!` };
+    }
+}
+
+app.post("/validate_location", (req, res) => {
+    const { gameId, location } = req.body;
+    if (!gameId || !location) {
+        return res.status(400).json({ success: false, message: "Missing gameId or location." });
+    }
+
+    // Validate the location (example validation logic)
+    const validationResponse = validateLocation(location, gameId);
+
+    console.log(validationResponse);
+    res.json(validationResponse);
+});
 
 // Start the server
 const PORT = 3001;
