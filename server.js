@@ -79,8 +79,16 @@ io.on("connection", (socket) => {
             // Advance to the next turn
             room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
             const nextTurnUser = room.users[room.currentTurnIndex];
-    
-            // Broadcast the updated locations list and next turn
+            
+            // Now, prepare to add marker for the guessed location on the map. 
+            const markerData = {
+                name: locationData.name_standard,
+                latitude: locationData.latitude,
+                longitude: locationData.longitude,
+            };    
+
+            // Broadcast the updated locations list, next turn, and marker data
+            io.to(gameId).emit("add-marker", markerData);
             io.to(gameId).emit("update-locations", room.locations);
             io.to(gameId).emit("update-turn", nextTurnUser);
     
