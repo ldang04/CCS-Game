@@ -47,24 +47,58 @@ io.on("connection", (socket) => {
         console.log(`User ${nickname} joined room ${gameId}`);
     });
 
+    // Before adding location, valdiate answer. 
+    const stringSimilarity = require("string-similarity");
+
+    function validateLocation(input) {
+        // Normalize input to format of locationMap key. 
+        const inputName = input.toLowerCase().trim();
+    
+        // Find the closest match in the hashmap. Parse thru all keys. 
+        const keys = Array.from(locationsMap.keys());
+        const { bestMatch } = stringSimilarity.findBestMatch(inputName, keys);
+    
+        if (bestMatch.rating > 0.8) { // Threshold for similarity set at 0.8. 
+            const location = locationsMap.get(bestMatch.target);
+    
+            if (location.isGuessed) {
+                return { success: false, message: `"${bestMatch.target}" has already been guessed!` };
+            } else {
+                // Mark the location as guessed and return it
+                location.isGuessed = true;
+                return { success: true, location_data: location };
+            }
+        } else {
+            return { success: false, message: `"${input}" is not a valid location!` };
+        }
+    }
+    
     // Handle adding a location
     socket.on("add-location", ({ gameId, location }) => {
         if (!gameRooms[gameId]) return;
+        
+        // Returns success if guess is valid. 
+        const validationResponse = validateLocation(location);
+        
+        if (validationResponse.success) {
+            const room = gameRooms[gameId];
 
-        const room = gameRooms[gameId];
+            // Add the location to the room's location list
+            // In this case, we want the standard naming of the location, and not the raw guess, to be added to the locations list. 
+            const location_data = validationResponse.location_data;
+            room.locations.push(location_data.name_standard);
+            
+            // Advance to the next turn
+            room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
+            const nextTurnUser = room.users[room.currentTurnIndex];
+    
+            // Broadcast the updated locations list and next turn
+            io.to(gameId).emit("update-locations", room.locations);
+            io.to(gameId).emit("update-turn", nextTurnUser);
+    
+            console.log(`Location added in room ${gameId}: ${location}`);
+        }
 
-        // Add the location to the room's location list
-        room.locations.push(location);
-
-        // Advance to the next turn
-        room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
-        const nextTurnUser = room.users[room.currentTurnIndex];
-
-        // Broadcast the updated locations list and next turn
-        io.to(gameId).emit("update-locations", room.locations);
-        io.to(gameId).emit("update-turn", nextTurnUser);
-
-        console.log(`Location added in room ${gameId}: ${location}`);
     });
 
     // Handle changing the current letter
@@ -114,10 +148,11 @@ const fs = require('fs');
 const csv = require('csv-parser');
 
 class LocationData {
-    constructor(latitude, longitude) {
+    constructor(latitude, longitude, name_standard) {
         this.isGuessed = false; // Initially, no location is guessed
         this.latitude = latitude;
         this.longitude = longitude;
+        this.name_standard = name_standard;
     }
 }
 
@@ -131,10 +166,11 @@ function loadLocations(csvFilePath) {
         fs.createReadStream(csvFilePath)
             .pipe(csv())
             .on('data', (row) => {
-                // ASSUME: name of each row is already normalized (lowercased, no punctuation)
-                const name = row.name;
+                // Normalize the name used for the hashmap key. 
+                const name = row.name.toLowerCase().trim();
                 // New entry into the locationsMap
-                locationsMap.set(name, new LocationData(row.latitude, row.longitude));
+                // Note: in this case, name_standard is the unmodified location name. 
+                locationsMap.set(name, new LocationData(row.latitude, row.longitude, row.name));
             })
             .on('end', () => {
                 console.log('CSV loaded successfully.');
@@ -170,15 +206,6 @@ app.get('/check-room/:roomId', (req, res) => {
     res.json({ exists: roomExists });
 });
 
-app.get('/debug-map', (req, res) => {
-    const mapData = Array.from(locationsMap.entries()).map(([key, value]) => ({
-        name: key,
-        isGuessed: value.isGuessed,
-        latitude: value.latitude,
-        longitude: value.longitude,
-    }));
-    res.json(mapData);
-});
 
 // Start the server
 const PORT = 3001;
