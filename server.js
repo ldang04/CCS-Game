@@ -27,11 +27,12 @@ io.on("connection", (socket) => {
 
     // Handle user joining a room
     socket.on("join-room", ({ gameId, nickname }) => {
+        // Creating a new room if the gameID doesn't yet exist. 
         if (!gameRooms[gameId]) {
             gameRooms[gameId] = { users: [], locations: [], currentLetter: "A", currentTurnIndex: 0 };
         }
-    
-        // Add the user to the room with an id and nickname
+        
+        // Else, room exists: add the user to the room with an id and nickname
         const user = { id: socket.id, name: nickname };
         gameRooms[gameId].users.push(user);
         socket.join(gameId);
@@ -107,6 +108,51 @@ io.on("connection", (socket) => {
     });
 });
 
+// Location hashmap. ==============================================================================================================
+// libraries to create the hashmap. 
+const fs = require('fs');
+const csv = require('csv-parser');
+
+class LocationData {
+    constructor(latitude, longitude) {
+        this.isGuessed = false; // Initially, no location is guessed
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+}
+
+// HashMap for locations
+const locationsMap = new Map();
+
+// Load CSV data into the locationsMap
+function loadLocations(csvFilePath) {
+    return new Promise((resolve, reject) => {
+        // Connect incoming CSV into the csv-parser, csv(). 
+        fs.createReadStream(csvFilePath)
+            .pipe(csv())
+            .on('data', (row) => {
+                // ASSUME: name of each row is already normalized (lowercased, no punctuation)
+                const name = row.name;
+                // New entry into the locationsMap
+                locationsMap.set(name, new LocationData(row.latitude, row.longitude));
+            })
+            .on('end', () => {
+                console.log('CSV loaded successfully.');
+                resolve();
+            })
+            .on('error', (err) => {
+                console.error('Error reading CSV:', err);
+                reject(err);
+            });
+    });
+}
+
+const locationsCSVFilePath = "client/public/datasets/cleaned_CCS_dataset.csv";
+
+loadLocations(locationsCSVFilePath).then(() => {
+    console.log('Locations loaded into hashmap:', locationsMap);
+});
+
 
 // API routes ==============================================================================================================
 app.get("/", (req, res) => {
@@ -122,6 +168,16 @@ app.get('/check-room/:roomId', (req, res) => {
     const { roomId } = req.params;
     const roomExists = Boolean(gameRooms[roomId]); // Check if the room exists in the gameRooms object
     res.json({ exists: roomExists });
+});
+
+app.get('/debug-map', (req, res) => {
+    const mapData = Array.from(locationsMap.entries()).map(([key, value]) => ({
+        name: key,
+        isGuessed: value.isGuessed,
+        latitude: value.latitude,
+        longitude: value.longitude,
+    }));
+    res.json(mapData);
 });
 
 // Start the server
