@@ -1,10 +1,27 @@
-import React from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import React, { useEffect } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet"; // Icon config
 
 const position = [51.505, -0.09]; // Arbitrary center. 
 const zoomLevel = 13; // Set zoom level
+
+const ZoomPanToMarker = ({ markerPosition }) => {
+    const map = useMap();  // Access the Leaflet map instance
+
+    useEffect(() => {
+        if (markerPosition) {
+            // Zoom out, pan to the new marker, and zoom in
+            // flyTo takes in an array {lat, lng}
+            map.flyTo(markerPosition, 13, {
+                duration: 1,  // Duration of the zoom/pan
+                animate: true,
+            });
+        }
+    }, [markerPosition, map]);
+
+    return null;
+};
 
 
 const Map = ({ markers }) => {
@@ -36,6 +53,11 @@ const Map = ({ markers }) => {
                             <Popup>{marker.name}</Popup>
                         </Marker>
                     ))}
+
+                    {/* ZoomPanToMarker will animate the map when a new marker is added */}
+                    {markers.length > 0 && (
+                        <ZoomPanToMarker markerPosition={[markers[markers.length - 1].latitude, markers[markers.length - 1].longitude]} />
+                    )}
                 </MapContainer>
             </div>
             );
