@@ -3,9 +3,9 @@ import '../../App.css';
 
 const Header = () => {
     return (
-        <div>
-            <h1>Countries, Cities, States Game</h1>
-            <p>Enter the name of a country, city, or state starting with the current letter.</p>
+        <div className="header-container">
+            <h1>Geochain.io</h1>
+            <p>Chain countries, cities, and states by their last letters!</p>
         </div>
     )
 }

@@ -2,21 +2,50 @@ body {
     padding: 2em;
 }
 
+h1 {
+    font-family: "Fredoka";
+    font-size: 3.5em;
+}
 .main-container {
     /* background: red; */
 }
 
-.main-header {
-
+.header-container {
+    margin: 0 0 1em 0 ;
 }
 /* NEW GAME STATE ==================================================================== */
 
-.create-btn {
-    margin: 3em 0 2em 0;
+#create-btn {
+    margin: 1em;
+    border: 3px solid black; 
+    border-radius: 10em;
+    background: #3D3BF3;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+#create-btn:hover {
+    cursor: pointer;
+}
+
+.join-container {
+    margin: 0 auto;
+    width: 80%;
+    display: flex;
+    justify-content: center;
+}
+
+.join-container p {
+    align-items: center;
+    display: flex;
 }
 
 .join-input {
     padding: 0.75em;
+    margin: 0.5em;
+    border: 2px solid gray;
+    border-radius: 0.5em;
 }
 
 /* PLAYING STATE ==================================================================== */
@@ -25,24 +54,46 @@ body {
     display: flex; /* Enable Flexbox */
     width: 80%;
     margin: 0 auto;
-    background: red;
+    /* background: red; */
     justify-content: space-between; /* Adjust spacing between children */
     align-items: stretch; /* Make children stretch vertically to match parent height */
     height: 25em; /* Ensure the parent has a height for children to stretch */
 }
 
-.places-list-container {
-    flex: 0 0 20%;
-    background: lightblue;
+.users-list-container {
+    flex: 0 0 15%;
     height: 100%;
     overflow-y: scroll;
 }
 
 .map-container {
-    flex: 0 0 80%;
+    flex: 0 0 70%;
     background: lightgray; 
     height: 25em; 
 }
+
+.user-li {
+    padding: 0.5em;
+    font-family: "Fredoka"; 
+    border: 2px solid gray;
+    border-radius: 0.5em;
+    margin: 0 0.2em 0.2em 0;
+}
+
+.li-header {
+  font-family: "Fredoka"; 
+  font-weight: 600;
+  font-size: 1.3em;
+  margin-bottom: 0.2em;
+}
+
+.places-list-container {
+    flex: 0 0 15%;
+    background: lightblue;
+    height: 100%;
+    overflow-y: scroll;
+}
+
 
 .input-container {
     display: flex; 
@@ -53,7 +104,8 @@ body {
 
 .main-input {
     padding: 0.75em;
-    width: 95%;
+    width: 100%;
+    margin: 0.5em 0 0.5em 0;
 }
 
 .btn {
@@ -61,4 +113,20 @@ body {
     display: inline-block;
     border: 1px solid black;
     border-radius: 0.2em;
+}
+
+.copy-btn {
+    padding: 0.2em;
+    background: none;
+    border: none;
+}
+
+.copy-btn:hover {
+    cursor: pointer;
+}
+
+.current-p {
+    font-family: "Fredoka";
+    font-weight: 600; 
+    font-size: 1.25em;
 }

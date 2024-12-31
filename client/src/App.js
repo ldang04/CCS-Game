@@ -8,13 +8,9 @@ import NewGame from './components/states/NewGame';
 import GameRoom from './components/states/GameRoom';
 
 const App = () => {
-    // socket states
-    const [messages, setMessages] = useState([]);
-
     //  game states
     const [gameState, setGameState] = useState(0); // 0: New Game 1: Playing 2: End
    
-    
     return (
         <Router>
             <Routes>

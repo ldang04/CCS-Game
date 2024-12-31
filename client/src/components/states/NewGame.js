@@ -6,46 +6,86 @@ import Header from "../helpers/Header";
 
 const NewGame = () => {
     const [input, setInput] = useState(""); 
+    const [nickname, setNickname] = useState("");
     const navigate = useNavigate(); // Initialize useNavigate
 
     const handleCreateGame = async () => {
-        // get new game link
-        const response = await fetch('http://localhost:3001/create_game');
+        if (!nickname.trim()) {
+            alert("Enter a nickname");
+            return;
+        }
+    
+        // Fetch a new game ID
+        const response = await fetch("http://localhost:3001/create_game");
         const data = await response.json();
-        const link = `http://localhost:3000/game/${data.gameId}`;
-
-        // Create a new game ID and navigate to the corresponding game link
-        const gameId = link.split('/').pop(); // Extract the gameId from the link
-
-        console.log(link); 
-        console.log(gameId); 
-        navigate(`/game/${gameId}`); // Navigate to the /game/:gameId route
+        const gameId = data.gameId;
+    
+        // Navigate to the GameRoom with the nickname
+        navigate(`/game/${gameId}`, { state: { nickname } });
     };
 
-    const handleJoin = () => {
-        navigate(`/game/${input}`)
-    }
+    const handleJoin = async () => {
+        if (!nickname.trim()) {
+            alert("Enter a nickname");
+            return;
+        }
+    
+        // Check if the room exists
+        try {
+            const response = await fetch(`http://localhost:3001/check-room/${input}`);
+            const data = await response.json();
+    
+            if (data.exists) {
+                navigate(`/game/${input}`, { state: { nickname } });
+            } else {
+                alert("Room does not exist. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error checking room:", error);
+            alert("An error occurred while checking the room. Please try again.");
+        }
+    };
 
     return (
         <div className="main-container">
             <Header />
 
-            <button className="btn create-btn" onClick={handleCreateGame}>
-                Create a new game
-            </button>
-
             <div className="join-container">
+                <p>Nickname:</p>
                 <input
                         className="join-input"
-                        placeholder="Game code"
+                        type="text"
+                        value={nickname}
+                        onChange={(e) => setNickname(e.target.value)}
+                        onKeyDown={(e) => {
+                            if(e.key === "Enter"){
+                                setNickname(nickname)
+                            }
+                        }}
+                    />
+            </div>
+
+            <div className="join-container">
+                <p>Join code:</p>
+                <input
+                        className="join-input"
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if(e.key === "Enter"){
+                                handleJoin()
+                            }
+                        }}
                     />
 
                 {/* @todo: room validation function  */}
-                <button className="btn" onClick={handleJoin}>Join</button>
             </div>
+            
+            <h3> OR </h3>
+            <button className="btn" id="create-btn" onClick={handleCreateGame}>
+                Create a new game
+            </button>
         </div>
     );
 };

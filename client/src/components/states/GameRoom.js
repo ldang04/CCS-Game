@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import { io } from "socket.io-client";
 
 import "../../App.css";
@@ -9,35 +9,71 @@ import Header from "../helpers/Header";
 
 const GameRoom = () => {
     const { gameId } = useParams();
+    const { state } = useLocation();
+
+    // State and Refs
+    const [nickname, setNickname] = useState("");
     const [socket, setSocket] = useState(null);
     const [locations, setLocations] = useState([]);
     const [currentLetter, setCurrentLetter] = useState("A");
     const [input, setInput] = useState("");
-    const [userName, setUserName] = useState("");
     const [isJoined, setIsJoined] = useState(false);
     const [users, setUsers] = useState([]); // List of users in the room
     const [currentTurn, setCurrentTurn] = useState(null); // User whose turn it is
+    const [copyLinkSuccess, setCopyLinkSuccess] = useState(false); // Track copy status
+    const [copyIdSuccess, setCopyIdSuccess] = useState(false); // Track copy status
+
+    const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
+
+    const handleCopyGameId = () => {
+        navigator.clipboard.writeText(gameId)
+            .then(() => setCopyIdSuccess(true))
+            .catch(() => setCopyIdSuccess(false));
+    };
+
+    const handleCopyLink = () => {
+        const gameLink = `http://localhost:3000/game/${gameId}`;
+        navigator.clipboard.writeText(gameLink)
+            .then(() => setCopyLinkSuccess(true))
+            .catch(() => setCopyLinkSuccess(false));
+    };
 
     useEffect(() => {
+        // Prompt for nickname only once
+        if (!nicknameRef.current.trim()) {
+            let userNickname = "";
+            do {
+                userNickname = prompt("Please enter your nickname:").trim();
+            } while (!userNickname);
+            nicknameRef.current = userNickname; // Set ref value
+            setNickname(userNickname); // Update state for reactivity
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!nicknameRef.current) return; // Ensure nickname is set
+
         const socket = io("http://localhost:3001"); // Connect to WebSocket server
         setSocket(socket);
 
-        // Listen for updates to the locations list
+        // Join specific room
+        socket.emit("join-room", { gameId, nickname: nicknameRef.current });
+
+        setIsJoined(true);
+
+        // Listen for updates
         socket.on("update-locations", (updatedLocations) => {
             setLocations(updatedLocations);
         });
 
-        // Listen for updates to the user list
         socket.on("update-users", (updatedUsers) => {
             setUsers(updatedUsers);
         });
 
-        // Listen for changes to the current letter
         socket.on("update-current-letter", (newLetter) => {
             setCurrentLetter(newLetter);
         });
 
-        // Listen for turn updates
         socket.on("update-turn", (turnUser) => {
             setCurrentTurn(turnUser);
         });
@@ -46,19 +82,6 @@ const GameRoom = () => {
             socket.disconnect();
         };
     }, [gameId]);
-
-    const handleJoinRoom = () => {
-        if (!userName.trim()) {
-            alert("Please enter your name.");
-            return;
-        }
-
-        // Emit the join-room event with the gameId and userName
-        socket.emit("join-room", { gameId, userName });
-
-        // Set the joined status to true
-        setIsJoined(true);
-    };
 
     const handleLocationEnter = () => {
         if (!input.trim()) return;
@@ -83,43 +106,35 @@ const GameRoom = () => {
             <Header />
 
             {!isJoined ? (
-                <div className="join-container input">
-                    <input
-                        type="text"
-                        placeholder="Enter your name"
-                        value={userName}
-                        onChange={(e) => setUserName(e.target.value)}
-                    />
-                    <button onClick={handleJoinRoom}>Join Room</button>
-                </div>
+                <p>Loading...</p>
             ) : (
                 <>
-                    <div className="users-container">
-                        <h3>Players:</h3>
-                        <ul>
-                            {users.map((user) => (
-                                <li key={user.id} style={{ fontWeight: user.id === currentTurn?.id ? "bold" : "normal" }}>
-                                    {user.name}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-
                     <div className="mid-container">
+                        <div className="users-list-container">
+                            <ul>
+                                <li className="li-header">Players</li>
+                                {users.map((user) => (
+                                    <li className="user-li" key={user.id} style={{ fontWeight: user.id === currentTurn?.id ? "bold" : "normal" }}>
+                                        {user.name}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        <Map />
                         <div className="places-list-container">
                             <ul>
-                                <li>Previous answers:</li>
+                                <li className="li-header">Previous:</li>
                                 {locations.map((location, index) => (
                                     <li key={index}>{location}</li>
                                 ))}
                             </ul>
                         </div>
-                        <Map />
                     </div>
 
-                    <p>
+                    <p className="current-p">
                         Current letter: {currentLetter},{" "}
-                        {currentTurn?.id === socket.id ? "Your turn" : `${currentTurn?.name}'s turn`}
+                        {currentTurn?.id === socket?.id ? "Your turn" : `${currentTurn?.name}'s turn`}
                     </p>
 
                     <div className="input-container">
@@ -128,23 +143,31 @@ const GameRoom = () => {
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            disabled={currentTurn?.id !== socket.id} // Disable input if not user's turn
+                            onKeyDown={(e) => {
+                                if(e.key === "Enter"){
+                                    handleLocationEnter()
+                                }
+                            }}
+                            disabled={currentTurn?.id !== socket?.id} // Disable input if not user's turn
                         />
-                        <button
-                            className="btn"
-                            onClick={handleLocationEnter}
-                            disabled={currentTurn?.id !== socket.id} // Disable button if not user's turn
-                        >
-                            Enter
-                        </button>
                     </div>
 
-                    <p>Game ID: {gameId}</p>
-                    <p>Share this link to invite others: {`http://localhost:3000/game/${gameId}`}</p>
+                    <p>
+                    Game ID: {gameId}{" "}
+                    <button onClick={handleCopyGameId} className="copy-btn">{copyIdSuccess ? "✅" : "🔗"}</button>
+                </p>
+
+                <p>
+                    Share this link to invite others: {`http://localhost:3000/game/${gameId}`}{" "}
+                    <button onClick={handleCopyLink} className="copy-btn">{copyLinkSuccess ? "✅" : "🔗"}</button>
+                </p>
                 </>
             )}
         </div>
     );
+    
 };
+
+
 
 export default GameRoom;

@@ -26,20 +26,24 @@ io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
     // Handle user joining a room
-    socket.on("join-room", ({ gameId, userName }) => {
+    socket.on("join-room", ({ gameId, nickname }) => {
         if (!gameRooms[gameId]) {
             gameRooms[gameId] = { users: [], locations: [], currentLetter: "A", currentTurnIndex: 0 };
         }
-
-        // Add the user to the room
-        gameRooms[gameId].users.push({ id: socket.id, name: userName });
+    
+        // Add the user to the room with an id and nickname
+        const user = { id: socket.id, name: nickname };
+        gameRooms[gameId].users.push(user);
         socket.join(gameId);
-
-        // Broadcast the updated user list and turn info
+    
+        // Broadcast the updated user list to everyone in the room
         io.to(gameId).emit("update-users", gameRooms[gameId].users);
-        io.to(gameId).emit("update-turn", gameRooms[gameId].users[gameRooms[gameId].currentTurnIndex]);
-
-        console.log(`User ${userName} joined room ${gameId}`);
+    
+        // Always broadcast the current turn user
+        const currentTurnUser = gameRooms[gameId].users[gameRooms[gameId].currentTurnIndex];
+        io.to(gameId).emit("update-turn", currentTurnUser);
+    
+        console.log(`User ${nickname} joined room ${gameId}`);
     });
 
     // Handle adding a location
@@ -53,10 +57,11 @@ io.on("connection", (socket) => {
 
         // Advance to the next turn
         room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
+        const nextTurnUser = room.users[room.currentTurnIndex];
 
         // Broadcast the updated locations list and next turn
         io.to(gameId).emit("update-locations", room.locations);
-        io.to(gameId).emit("update-turn", room.users[room.currentTurnIndex]);
+        io.to(gameId).emit("update-turn", nextTurnUser);
 
         console.log(`Location added in room ${gameId}: ${location}`);
     });
@@ -93,11 +98,15 @@ io.on("connection", (socket) => {
 
                 // Broadcast the updated user list and turn
                 io.to(gameId).emit("update-users", room.users);
-                io.to(gameId).emit("update-turn", room.users[room.currentTurnIndex]);
+                if (room.users.length > 0) {
+                    const nextTurnUser = room.users[room.currentTurnIndex];
+                    io.to(gameId).emit("update-turn", nextTurnUser);
+                }
             }
         }
     });
 });
+
 
 // API routes ==============================================================================================================
 app.get("/", (req, res) => {
@@ -107,6 +116,12 @@ app.get("/", (req, res) => {
 app.get('/create_game', (req, res) => {
     const gameId = uuidv4(); // Generate a unique ID for the game
     res.json({ gameId }); // Send the game ID back to the client
+});
+
+app.get('/check-room/:roomId', (req, res) => {
+    const { roomId } = req.params;
+    const roomExists = Boolean(gameRooms[roomId]); // Check if the room exists in the gameRooms object
+    res.json({ exists: roomExists });
 });
 
 // Start the server
