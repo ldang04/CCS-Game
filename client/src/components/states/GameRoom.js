@@ -30,9 +30,8 @@ const GameRoom = () => {
     const [isStarted, setIsStarted] = useState(false); 
 
     const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
-    const livesRef = useRef(state?.lives || 3); 
-    const timeLimitRef = useRef(state?.timeLimit || 60); 
-    
+    const hasCheckedRoom = useRef(false); // Declare useRef at the top level of the component
+
     const navigate = useNavigate(); 
 
     const handleCopyGameId = () => {
@@ -49,27 +48,72 @@ const GameRoom = () => {
     };
 
     const handleStartGame = () => {
+        console.log("clicked start game");
+        console.log(isStarted);
         if (socket) {
             socket.emit("start-game-pressed", { gameId });
         }
     };    
 
-    useEffect(() => {
-        console.log(state);
-    }, [])
+    // handle room not existing
+    useEffect(() => {    
+        console.log("from initialize room");
+        const initializeRoom = async () => {
+            if (hasCheckedRoom.current) return; // Skip if already checked
+            hasCheckedRoom.current = true; // Mark as checked
+            
+            try {
+                // Fetch room existence status from the server
+                const response = await fetch(`http://localhost:3001/check-room/${gameId}`);
+                const data = await response.json();
+    
+                if (!data.exists) {
+                    console.log("does not exist identified");
+                    alert("Room does not exist. Redirecting to the home page.");
+                    navigate("/"); // Redirect to home if the room doesn't exist
+                    return; // Exit early to prevent nickname prompt
+                }
+    
+                // Room exists, prompt for nickname
+                if (!nicknameRef.current.trim()) {
+                    let userNickname = "";
+                    do {
+                        userNickname = prompt("Please enter your nickname:").trim();
+                    } while (!userNickname);
+    
+                    nicknameRef.current = userNickname; // Set ref value
+                    setNickname(userNickname); // Update state for reactivity
+                }
+            } catch (error) {
+                console.error("Error checking room existence:", error);
+                alert("An error occurred while checking the room. Please try again later.");
+                navigate("/"); // Redirect to home on error
+            }
+        };
+        
+        if(!nicknameRef.current || !nicknameRef.current.trim()){
+            console.log("no nickname ref");
+            initializeRoom();
+        } else {
+            console.log("from return");
+            return;
+        }
+    }, [gameId, navigate]);
+    
     
     useEffect(() => {
         if (!socket) return;
     
         // Handle initialization for a new user
-        socket.on("initialize-game", ({ locations, markers, currentLetter, users, currentTurn, timeLimit }) => {
-            console.log("Initializing game with data:", { locations, markers, currentLetter, users, currentTurn, timeLimit });
+        socket.on("initialize-game", ({ locations, markers, currentLetter, users, currentTurn, timeLimit, isStarted }) => {
+            console.log("Initializing game with data:", { locations, markers, currentLetter, users, currentTurn, timeLimit, isStarted });
             setLocations(locations);
             setMarkers(markers);
             setCurrentLetter(currentLetter);
             setUsers(users);
             setCurrentTurn(currentTurn);
             setTimeLimit(timeLimit); // Set timeLimit from server
+            setIsStarted(isStarted);
         });
     
         // Listen for any new markers, and update the Map component using the incoming markers. 
@@ -113,18 +157,6 @@ const GameRoom = () => {
             socket.off("game-started");
         };
     }, [socket]);
-
-    useEffect(() => {
-        // Prompt for nickname only once
-        if (!nicknameRef.current.trim()) {
-            let userNickname = "";
-            do {
-                userNickname = prompt("Please enter your nickname:").trim();
-            } while (!userNickname);
-            nicknameRef.current = userNickname; // Set ref value
-            setNickname(userNickname); // Update state for reactivity
-        }
-    }, []);
 
     useEffect(() => {
         if (!nicknameRef.current) return; // Ensure nickname is set
@@ -188,8 +220,6 @@ const GameRoom = () => {
 
     const handleTimeOut = () => {
         if (currentTurn?.id === socket?.id) {
-            alert("Time's up! Passing to the next player...");
-
             // If the time is out, check and update the current player's life. 
             const currentUser = getCurrentUser();
             if (currentUser.lives > 0) {
@@ -197,7 +227,7 @@ const GameRoom = () => {
                 socket.emit("pass-turn", { gameId });
             }
             else { // player has lost
-                alert("You have no more lives left. Your out...");
+                alert("You have no more lives left. You're out...");
                 // 1. Solo: End the game
                 if (isSolo) {
                     socket.emit("end-game", { gameId });
@@ -240,7 +270,10 @@ const GameRoom = () => {
                                         key={user.id} 
                                         style={{ fontWeight: user.id === currentTurn?.id ? "bold" : "normal",
                                         display: "flex",
-                                        alignItems: "center",}}
+                                        alignItems: "center",
+                                        color: user.isActive ? "black" : "gray",
+                                        textDecorationLine: user.active ? "none" : "lineThrough",
+                                    }}
                                     >
                                         <Lives numLives={user.lives} />
                                         <span>{user.name}</span>
@@ -287,10 +320,10 @@ const GameRoom = () => {
                             }
                         }}
                         placeholder={`Enter a location starting with "${currentLetter}"`}
-                        disabled={currentTurn?.id !== socket?.id} // Disable input if not user's turn
+                        disabled={(currentTurn?.id !== socket?.id) || !isStarted} // Disable input if not user's turn
                     />
                 </div>
-                
+
                 <div className="places-list-container-compact show">
                         <p className="li-header">Previous:</p>
                         

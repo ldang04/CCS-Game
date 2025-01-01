@@ -29,62 +29,105 @@ io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
     // Handle user joining a room
-    socket.on("join-room", ({ gameId, nickname, time, lives }) => {
-        if (!gameRooms[gameId]) {
-            gameRooms[gameId] = {
-                isStarted: false,
-                users: [],
-                locations: [],
-                currentLetter: "A",
-                currentTurnIndex: 0,
-                timeLimit: time ?? 60, // Default to 60 seconds
-                lives: lives ?? 3, // Default to 3 lives
-                guessedLocations: new Set(),
-                isSolo: false, // Default to multiplayer
-            };
-        }
-    
-        const room = gameRooms[gameId];
-    
-        // Prevent users from joining if the game has already started
-        if (room.isStarted) {
-            socket.emit("game-started-error", { message: "The game has already started." });
-            return;
-        }
-    
-        // Add the user to the room
-        const user = { id: socket.id, name: nickname, lives: room.lives };
-        room.users.push(user);
-        socket.join(gameId);
-    
-        // Send the previous locations and markers to the newly joined user
-        socket.emit("initialize-game", {
-            locations: room.locations,
-            markers: room.locations.map((loc) => {
-                const locationData = Array.from(locationsMap.values()).find(
-                    (item) => item.name_standard === loc
-                );
-                return locationData
-                    ? {
-                          latitude: locationData.latitude,
-                          longitude: locationData.longitude,
-                          name: locationData.name_standard,
-                      }
-                    : null;
-            }).filter(Boolean),
-            currentLetter: room.currentLetter,
-            users: room.users,
-            currentTurn: room.users[room.currentTurnIndex],
-            timeLimit: room.timeLimit, // Send the room's time limit
-        });
-    
-        io.to(gameId).emit("update-users", room.users);
-        io.to(gameId).emit("update-turn", room.users[room.currentTurnIndex]);
-        console.log(`User ${nickname} joined room ${gameId}`);
+   socket.on("join-room", ({ gameId, nickname, time, lives }) => {
+    if (!gameRooms[gameId]) {
+        gameRooms[gameId] = {
+            isStarted: false,
+            users: [],
+            locations: [],
+            currentLetter: "A",
+            currentTurnIndex: 0,
+            timeLimit: time ?? 60,
+            lives: lives ?? 3,
+            guessedLocations: new Set(),
+        };
+    }
+
+    const room = gameRooms[gameId];
+
+    // Prevent users from joining if the game has already started
+    if (room.isStarted) {
+        console.log("from join-room");
+        socket.emit("game-started-error", { message: "The game has already started." });
+        return;
+    }
+
+    const user = { id: socket.id, name: nickname, lives: room.lives, isActive: true };
+    room.users.push(user);
+    socket.join(gameId);
+
+    // Emit initialization data
+    socket.emit("initialize-game", {
+        locations: room.locations,
+        markers: room.locations.map((loc) => { /* mapping logic */ }),
+        currentLetter: room.currentLetter,
+        users: room.users,
+        currentTurn: room.users[room.currentTurnIndex],
+        timeLimit: room.timeLimit,
+        isStarted: false
     });
+
+    io.to(gameId).emit("update-users", room.users);
+    io.to(gameId).emit("update-turn", room.users[room.currentTurnIndex]);
+});
+
     
     
+    function startTimer(gameId) {
+        const room = gameRooms[gameId];
+        if (!room) return;
     
+        room.timeLeft = room.timeLimit; // Initialize timeLeft to the room's timeLimit
+    
+        const timerInterval = setInterval(() => {
+            if (room.timeLeft <= 0) {
+                clearInterval(timerInterval);
+                handleTimeOut(gameId); // Handle timeout logic
+                return;
+            }
+    
+            room.timeLeft -= 1;
+    
+            // Broadcast the updated time to all players
+            io.to(gameId).emit("update-timer", room.timeLeft);
+        }, 1000);
+    
+        room.timerInterval = timerInterval; // Save the interval ID for cleanup if needed
+    }
+    
+    function handleTimeOut(gameId) {
+        const room = gameRooms[gameId];
+        if (!room) return;
+    
+        const currentUser = room.users[room.currentTurnIndex];
+        if (currentUser.lives > 1) {
+            currentUser.lives -= 1;
+            io.to(gameId).emit("update-users", room.users);
+        } else {
+            // Mark user as inactive
+            currentUser.isActive = false;
+            io.to(gameId).emit("update-users", room.users);
+    
+            // Check if all users are inactive or the room is empty
+            if (room.users.every((user) => !user.active)) {
+                io.to(gameId).emit("game-ended");
+                clearInterval(room.timerInterval); // Stop the timer
+                delete gameRooms[gameId]; // Clean up the game room
+                return;
+            }
+        }
+    
+         // Move to the next active user
+        do {
+            room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
+        } while (!room.users[room.currentTurnIndex].active);
+
+        io.to(gameId).emit("update-turn", room.users[room.currentTurnIndex]);
+
+        // Restart the timer for the next turn
+        startTimer(gameId);
+    }
+
     // start a game 
     socket.on("start-game-pressed", ({ gameId }) => {
         const room = gameRooms[gameId];
@@ -97,6 +140,7 @@ io.on("connection", (socket) => {
     
         // Check if the game is already started
         if (room.isStarted) {
+            console.log("from start-game-pressed");
             socket.emit("game-started-error", { message: "Game has already started." });
             return;
         }
