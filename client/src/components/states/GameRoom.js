@@ -212,7 +212,7 @@ const GameRoom = () => {
                         </div>
 
                         <Map markers={markers} /> {/* Pass markers to Map */}
-                        <div className="places-list-container">
+                        <div className="places-list-container hide">
                             <ul id="previous-ul">
                                 <li className="li-header">Previous:</li>
                                 {locations.map((location, index) => (
@@ -224,7 +224,7 @@ const GameRoom = () => {
                     
                     
                     {!isStarted ? (
-                        <button onClick={handleStartGame} className="btn purple-btn">
+                        <button onClick={handleStartGame} className="btn color-btn">
                             Start Game
                         </button>
                     ) : (
@@ -252,16 +252,19 @@ const GameRoom = () => {
                             disabled={currentTurn?.id !== socket?.id} // Disable input if not user's turn
                         />
                     </div>
+                
+                <div className="footer-container">
+                    <p>
+                        Join code: {gameId}{" "}
+                        <button onClick={handleCopyGameId} className="copy-btn">{copyIdSuccess ? "✅" : "🔗"}</button>
+                    </p>
 
                     <p>
-                    Join code: {gameId}{" "}
-                    <button onClick={handleCopyGameId} className="copy-btn">{copyIdSuccess ? "✅" : "🔗"}</button>
-                </p>
-
-                <p>
-                    Share this link to invite others: {`http://localhost:3000/game/${gameId}`}{" "}
-                    <button onClick={handleCopyLink} className="copy-btn">{copyLinkSuccess ? "✅" : "🔗"}</button>
-                </p>
+                        Share this link to invite others: {`http://localhost:3000/game/${gameId}`}{" "}
+                        <button onClick={handleCopyLink} className="copy-btn">{copyLinkSuccess ? "✅" : "🔗"}</button>
+                    </p>
+                </div>
+                
                 </>
             )}
         </div>

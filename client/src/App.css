@@ -1,12 +1,24 @@
 /* HEADER ============ */
 .header-container {
-    margin: 0 0 1em 0 ;
+    margin: 0 0 0.75em 0 ;
 }
 
 .header-container h1:hover {
     cursor: pointer;
 }
 
+.header-container h1 {
+    -webkit-text-stroke: 2px black; /* Black border */
+  -webkit-text-fill-color: #FF8E00; /* Fill the text with yellow */
+  text-shadow: 0px 4px 8px rgba(0, 0, 0, 0.4); /* Optional depth shadow */
+  display: inline-block;
+}
+
+.header-container p {
+  -webkit-text-fill-color: white; /* Fill the text with yellow */
+  font-weight: 600;
+  font-size: 1.25em;
+}
 /* ================================== */
 
 body {
@@ -15,6 +27,10 @@ body {
     height: 100vh; 
     justify-content: center;
     align-items: center;
+    background-color: #0c74f5;
+    opacity: 1;
+    background: radial-gradient(circle, transparent 20%, #0c74f5 20%, #0c74f5 80%, transparent 80%, transparent), radial-gradient(circle, transparent 20%, #0c74f5 20%, #0c74f5 80%, transparent 80%, transparent) 22.5px 22.5px, linear-gradient(#0044ff 1.8px, transparent 1.8px) 0 -0.9px, linear-gradient(90deg, #0044ff 1.8px, #0c74f5 1.8px) -0.9px 0;
+    background-size: 45px 45px, 45px 45px, 22.5px 22.5px, 22.5px 22.5px;
   }
 
 h1 {
@@ -42,10 +58,6 @@ button {
     background: white;
 }
 
-.main-container-game {
-    background: red;
-}
-
 .main-left {
     flex: 0 0 50%; 
     border-right: 1px solid gray;
@@ -55,20 +67,31 @@ button {
     flex: 0 0 50%; 
 }
 
+input::placeholder {
+    font-family: "Fredoka";
+}
+
+input {
+    font-family: "Fredoka";
+}
+
+input::target-text {
+    font-family: "Fredoka";
+}
 
 /* NEW GAME STATE ==================================================================== */
 
-.purple-btn {
+.color-btn {
     margin: 0.5em;
     border: 3px solid black; 
     border-radius: 10em;
-    background: #3D3BF3;
+    background: #0044ff;
     color: white;
     font-weight: 600;
     font-size: 1.1em;
 }
 
-#create-btn:hover {
+.color-btn:hover {
     cursor: pointer;
 }
 
@@ -113,8 +136,12 @@ button {
     text-align: right;
     width: 70vw;
     padding: 0 1em 0.5em 1em;
-
+    color: white;
+    font-family: "Fredoka"; 
+    font-weight: 600;
+    font-size: 1.15em;
 }
+
 .map-container {
     flex: 0 0 70%;
     background: lightgray; 
@@ -124,9 +151,12 @@ button {
 .user-li {
     padding: 0.5em;
     font-family: "Fredoka"; 
-    border: 2px solid gray;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid black;
     border-radius: 0.5em;
     margin: 0 0.2em 0 0;
+    background: white;
+    color: black;
 }
 
 .li-header {
@@ -134,34 +164,37 @@ button {
   font-weight: 600;
   font-size: 1.3em;
   margin-bottom: 0.2em;
+  color: white;
 }
 
 .places-list-container {
     flex: 0 0 15%;
-    background: #3D3BF3;
     height: 100%;
     overflow-y: scroll;
     color: white;
+    font-family: "Fredoka";
+    border-radius: 0 0.5em 0.5em 0;
+    background-color: #0044ff; 
 }
 
 
 .input-container {
     display: flex; 
     justify-content: center;
-    width: 80%;
+    width: 70vw;
     margin: 0 auto;
+    border-radius: 1em;
 }
 
 .main-input {
     padding: 0.75em;
     width: 100%;
-    margin: 0.5em 0 0.5em 0;
+    margin: 0.5em 0 0.75em 0;
 }
 
 .btn {
     padding: 0.75em;
     display: inline-block;
-    border: 1px solid black;
 }
 
 .copy-btn {
@@ -178,6 +211,8 @@ button {
     font-family: "Fredoka";
     font-weight: 600; 
     font-size: 1.25em;
+    color: white;
+    padding: 0.2em 0 0.2em 0;
 }
 
 .lives-container {
@@ -200,4 +235,114 @@ button {
     left: 50%;
     transform: translate(-50%, -50%); /* Center the text on the heart*/
     font-family: "Fredoka";
+}
+
+.footer-container {
+    color: white;
+}
+
+.footer-container button {
+    background: white;
+    border-radius: 0.2em;
+}
+
+.hide {
+    display: inline-block;
+}
+
+/* RESPONSIVE BREAKPOINT:  */
+@media (min-width: 0px) and (max-width: 768px) {
+
+    .hide {
+        display: none;
+    }
+
+    .header-container {
+        max-width: 70vw;
+        margin: 0 auto;
+        padding-bottom: 0.5em;
+    }
+
+    .header-container h1 {
+        font-size: 3em;
+    }
+
+    .header-container p {
+        font-size: 1em;
+    }
+
+    .li-header {
+        font-size: 1em;
+    }
+
+    .user-li {
+        background: none;
+        border: none;
+        padding: 0;
+        box-shadow: none;
+        font-size: 0.75em;
+        color: white;
+    }
+
+    .map-container {
+        flex: 0 0 80%;
+        background: green;
+    }
+
+    .users-list-container {
+        flex: 0 0 20%;
+    }
+
+    .places-list-container {
+        padding-left: 0.5em;
+        background: none;
+    }
+
+    .places-list-container li{
+        font-size: 0.75em;
+    }
+
+    .mid-container {
+        width: 90vw;
+        padding: 0;
+    }
+    
+    .timer {
+        font-size: 1em;
+        width: 80vw;
+    }
+
+    .main-container {
+        display: flex;
+        flex-direction: column; /* Stack children vertically */
+        justify-content: center;
+        width: 70vw;
+        margin: 0 auto;
+        padding: 2em;
+        border-radius: 0.75em;
+        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        font-family: "Fredoka";
+        background: white;
+    }
+    
+    .main-left {
+        flex: 100%; 
+        border-bottom: 1px solid gray; 
+        border-right: none;
+        padding: 0 0 1em 0;
+    }
+    
+    .main-right {
+        flex: 100%; 
+        padding: 1em 0 0 0;
+    }
+
+    .footer-container {
+        font-size: 0.9em;
+    }
+
+    .color-btn {
+        font-size: 1em;
+    }
 }

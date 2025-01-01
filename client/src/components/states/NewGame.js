@@ -104,7 +104,7 @@ const NewGame = () => {
                         
                         <h3> OR </h3>
 
-                        <button className="btn purple-btn" id="create-btn" onClick={handleCreateGame}>
+                        <button className="btn color-btn" id="create-btn" onClick={handleCreateGame}>
                             Create a new game
                         </button>
                     </div>
