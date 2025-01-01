@@ -6,13 +6,14 @@ import "../../App.css";
 
 import Map from "../helpers/Map";
 import Header from "../helpers/Header";
+import Timer from "../helpers/Timer";
 
 const GameRoom = () => {
     const { gameId } = useParams();
     const { state } = useLocation();
 
     // State and Refs
-    const [nickname, setNickname] = useState("");
+    const [nickname, setNickname] = useState(""); 
     const [socket, setSocket] = useState(null);
     const [locations, setLocations] = useState([]);
     const [currentLetter, setCurrentLetter] = useState("A");
@@ -23,8 +24,13 @@ const GameRoom = () => {
     const [copyLinkSuccess, setCopyLinkSuccess] = useState(false); // Track copy status
     const [copyIdSuccess, setCopyIdSuccess] = useState(false); // Track copy status
     const [markers, setMarkers] = useState([]); // Track Map markers
+    const [timeLimit, setTimeLimit] = useState(null); // Initially null, to be set by server
+    const [isStarted, setIsStarted] = useState(false); 
 
     const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
+    const livesRef = useRef(state?.lives || 3); 
+    const timeLimitRef = useRef(state?.timeLimit || 60); 
+    
     const navigate = useNavigate(); 
 
     const handleCopyGameId = () => {
@@ -40,17 +46,28 @@ const GameRoom = () => {
             .catch(() => setCopyLinkSuccess(false));
     };
 
+    const handleStartGame = () => {
+        if (socket) {
+            socket.emit("start-game", { gameId });
+        }
+    };    
+
+    useEffect(() => {
+        console.log(state);
+    }, [])
+    
     useEffect(() => {
         if (!socket) return;
     
         // Handle initialization for a new user
-        socket.on("initialize-game", ({ locations, markers, currentLetter, users, currentTurn }) => {
-            console.log("Initializing game with data:", { locations, markers, currentLetter, users, currentTurn });
-            setLocations(locations); // Set previous locations
-            setMarkers(markers); // Set previous markers
-            setCurrentLetter(currentLetter); // Set the current letter
-            setUsers(users); // Set the user list
-            setCurrentTurn(currentTurn); // Set the current turn
+        socket.on("initialize-game", ({ locations, markers, currentLetter, users, currentTurn, timeLimit }) => {
+            console.log("Initializing game with data:", { locations, markers, currentLetter, users, currentTurn, timeLimit });
+            setLocations(locations);
+            setMarkers(markers);
+            setCurrentLetter(currentLetter);
+            setUsers(users);
+            setCurrentTurn(currentTurn);
+            setTimeLimit(timeLimit); // Set timeLimit from server
         });
     
         // Listen for any new markers, and update the Map component using the incoming markers. 
@@ -70,10 +87,23 @@ const GameRoom = () => {
             navigate('/'); 
         })
 
+        socket.on('start-game', () => {
+            setIsStarted(true); 
+        }); 
+
+        // Handle initialization for a new user
+        socket.on("game-started", ({ currentLetter, currentTurn, timeLimit }) => {
+            setIsStarted(true);
+            setCurrentLetter(currentLetter);
+            setCurrentTurn(currentTurn);
+            setTimeLimit(timeLimit);
+        });
+
         return () => {
             socket.off("initialize-game");
-            socket.off("add-marker"); // Cleanup listener on component unmount
+            socket.off("add-marker"); 
             socket.off("location-error");
+            socket.off("game-started");
         };
     }, [socket]);
 
@@ -96,7 +126,12 @@ const GameRoom = () => {
         setSocket(socket);
 
         // Join specific room
-        socket.emit("join-room", { gameId, nickname: nicknameRef.current });
+        socket.emit("join-room", { 
+            gameId, 
+            nickname: nicknameRef.current, 
+            time: state?.timeLimit || 60, // Fallback to default if state is null
+            lives: state?.lives || 3 // Fallback to default if state is null
+        });
 
         setIsJoined(true);
 
@@ -137,6 +172,13 @@ const GameRoom = () => {
         setInput("");
     };
 
+    const handleTimeOut = () => {
+        if (currentTurn?.id === socket?.id) {
+            alert("Time's up! Passing to the next player...");
+            socket.emit("pass-turn", { gameId });
+        }
+    };
+
     return (
         <div className="game-wrapper-container">
             <Header />
@@ -145,6 +187,12 @@ const GameRoom = () => {
                 <p>Loading...</p>
             ) : (
                 <>
+                {isStarted ? (
+                    <Timer key={currentTurn?.id} timeLimit={timeLimit} onTimeOut={handleTimeOut} />
+                ) : (
+                    <>
+                    </>
+                )}
                     <div className="mid-container">
                         <div className="users-list-container">
                             <ul>
@@ -169,10 +217,19 @@ const GameRoom = () => {
                     </div>
                     
                     
-                    <p className="current-p">
-                        Current letter: {currentLetter},{" "}
-                        {currentTurn?.id === socket?.id ? "Your turn" : `${currentTurn?.name}'s turn`}
-                    </p>
+                    {!isStarted ? (
+                        <button onClick={handleStartGame} className="btn purple-btn">
+                            Start Game
+                        </button>
+                    ) : (
+                        <>
+                            <p className="current-p">
+                                Current letter: {currentLetter},{" "}
+                                {currentTurn?.id === socket?.id ? "Your turn" : `${currentTurn?.name}'s turn`}
+                            </p>
+                        </>
+                    )}
+
 
                     <div className="input-container">
                         <input

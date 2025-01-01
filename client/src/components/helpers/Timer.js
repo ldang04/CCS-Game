@@ -1,26 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 
-const Timer = ({ initialTime, onTimeOut }) => {
-    const [timeLeft, setTimeLeft] = useState(initialTime); // Timer state
+const Timer = ({ timeLimit, onTimeOut }) => {
+    const [timeLeft, setTimeLeft] = useState(timeLimit);
+
+    useEffect(() => {
+        setTimeLeft(timeLimit); // Reset timer whenever timeLimit changes
+    }, [timeLimit]);
 
     useEffect(() => {
         if (timeLeft <= 0) {
-            onTimeOut(); // Trigger timeout action
+            onTimeOut();
             return;
         }
 
         const timer = setInterval(() => {
-            setTimeLeft((prevTime) => prevTime - 1);
+            setTimeLeft((prev) => prev - 1);
         }, 1000);
 
-        return () => clearInterval(timer); // Cleanup on unmount
+        return () => clearInterval(timer);
     }, [timeLeft, onTimeOut]);
 
-    return (
-        <div className="timer">
-            <p>Time Remaining: {timeLeft}s</p>
-        </div>
-    );
+    return <div className="timer">Time Remaining: {timeLeft}s</div>;
 };
 
 export default Timer;

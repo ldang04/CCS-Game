@@ -18,14 +18,20 @@ const NewGame = () => {
             return;
         }
     
+        if (time <= 0) {
+            alert("Please enter a valid time limit.");
+            return;
+        }
+    
         // Fetch a new game ID
         const response = await fetch("http://localhost:3001/create_game");
         const data = await response.json();
         const gameId = data.gameId;
     
-        // Navigate to the GameRoom with the nickname
-        navigate(`/game/${gameId}`, { state: { nickname } });
-    };
+        // Navigate to the GameRoom with the nickname, timeLimit, and lives
+        navigate(`/game/${gameId}`, { state: { nickname, timeLimit: time, lives } });
+
+    };    
 
     const handleJoin = async () => {
         if (!nickname.trim()) {
@@ -98,7 +104,7 @@ const NewGame = () => {
                         
                         <h3> OR </h3>
 
-                        <button className="btn" id="create-btn" onClick={handleCreateGame}>
+                        <button className="btn purple-btn" id="create-btn" onClick={handleCreateGame}>
                             Create a new game
                         </button>
                     </div>
