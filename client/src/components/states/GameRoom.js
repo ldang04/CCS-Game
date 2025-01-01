@@ -201,7 +201,8 @@ const GameRoom = () => {
                                 {users.map((user) => (
                                     <li className="user-li" 
                                         key={user.id} 
-                                        style={{ fontWeight: user.id === currentTurn?.id ? "bold" : "normal",       display: "flex",
+                                        style={{ fontWeight: user.id === currentTurn?.id ? "bold" : "normal",
+                                        display: "flex",
                                         alignItems: "center",}}
                                     >
                                         <Lives numLives={user.lives} />
