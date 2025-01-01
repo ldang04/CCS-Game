@@ -187,31 +187,34 @@ const GameRoom = () => {
     };
 
     const handleTimeOut = () => {
-        if (currentTurn?.id === socket?.id) {
-            alert("Time's up! Passing to the next player...");
+        const currentUser = getCurrentUser();
 
-            // If the time is out, check and update the current player's life. 
-            const currentUser = getCurrentUser();
-            if (currentUser.lives > 0) {
-                socket.emit("update-life", { gameId, userId: socket.id, newLives: currentUser.lives - 1 }); 
-                socket.emit("pass-turn", { gameId });
+        // Ensure the function only executes if the client is the current turn player
+        if (currentTurn?.id !== socket?.id) {
+            return;
+        }
+        
+        alert("Time's up! Passing to the next player...");
+
+        // If the time is out, check and update the current player's life. 
+        if (currentUser.lives > 0) {
+            socket.emit("update-life", { gameId, userId: socket.id, newLives: currentUser.lives - 1 }); 
+            socket.emit("pass-turn", { gameId });
+        }
+        else { // player has lost
+            alert("You have no more lives left. Your out...");
+            // 1. Solo: End the game
+            if (isSolo) {
+                socket.emit("end-game", { gameId });
             }
-            else { // player has lost
-                alert("You have no more lives left. Your out...");
-                // 1. Solo: End the game
-                if (isSolo) {
+            // 2. Multi: End only if one player with non-zero lives is left
+            else {
+                const remainingPlayers = users.filter(user => user.lives > 0);
+                if (remainingPlayers.length <= 1) {
                     socket.emit("end-game", { gameId });
+                } else {
+                    socket.emit("pass-turn", { gameId });
                 }
-                // 2. Multi: End only if one player with non-zero lives is left
-                else {
-                    const remainingPlayers = users.filter(user => user.lives > 0);
-                    if (remainingPlayers.length <= 1) {
-                        socket.emit("end-game", { gameId });
-                    } else {
-                        socket.emit("pass-turn", { gameId });
-                    }
-                }
-                
             }
 
         }
