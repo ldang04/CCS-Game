@@ -22,6 +22,7 @@ const GameRoom = () => {
     const [currentTurn, setCurrentTurn] = useState(null); // User whose turn it is
     const [copyLinkSuccess, setCopyLinkSuccess] = useState(false); // Track copy status
     const [copyIdSuccess, setCopyIdSuccess] = useState(false); // Track copy status
+    const [markers, setMarkers] = useState([]); // Track Map markers
 
     const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
 
@@ -51,7 +52,23 @@ const GameRoom = () => {
             }
         };
     }, [socket]);
-    
+
+    // Listen for any new markers, and update the Map component using the incoming markers. 
+    useEffect(() => {
+        if (!socket) return;
+
+        socket.on("add-marker", (markerData) => {
+            console.log("Adding marker to map:", markerData);
+
+            // Add the marker to the state. 
+            setMarkers((prevMarkers) => [...prevMarkers, markerData]);
+        });
+
+        return () => {
+            socket.off("add-marker"); // Cleanup listener on component unmount
+        };
+    }, [socket]);
+
     useEffect(() => {
         // Prompt for nickname only once
         if (!nicknameRef.current.trim()) {
@@ -152,7 +169,7 @@ const GameRoom = () => {
                             </ul>
                         </div>
 
-                        <Map />
+                        <Map markers={markers} /> {/* Pass markers to Map */}
                         <div className="places-list-container">
                             <ul id="previous-ul">
                                 <li className="li-header">Previous:</li>
