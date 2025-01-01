@@ -21,6 +21,7 @@ const GameRoom = () => {
     const [input, setInput] = useState("");
     const [isJoined, setIsJoined] = useState(false);
     const [users, setUsers] = useState([]); // List of users in the room
+    const [isSolo, setIsSolo] = useState(false); // Check if the game is solo
     const [currentTurn, setCurrentTurn] = useState(null); // User whose turn it is
     const [copyLinkSuccess, setCopyLinkSuccess] = useState(false); // Track copy status
     const [copyIdSuccess, setCopyIdSuccess] = useState(false); // Track copy status
@@ -49,7 +50,7 @@ const GameRoom = () => {
 
     const handleStartGame = () => {
         if (socket) {
-            socket.emit("start-game", { gameId });
+            socket.emit("start-game-pressed", { gameId });
         }
     };    
 
@@ -83,21 +84,26 @@ const GameRoom = () => {
             alert(message); // Show the error message
         });
 
+        socket.on("update-users", (updatedUsers) => {
+            setUsers(updatedUsers);
+        });
+
         socket.on("game-started-error",() => {
             alert("Game is already in session."); 
             navigate('/'); 
         })
 
-        socket.on('start-game', () => {
-            setIsStarted(true); 
-        }); 
-
         // Handle initialization for a new user
-        socket.on("game-started", ({ currentLetter, currentTurn, timeLimit }) => {
+        socket.on("game-started", ({ currentLetter, currentTurn, timeLimit, users, locations, isSolo}) => {
             setIsStarted(true);
             setCurrentLetter(currentLetter);
             setCurrentTurn(currentTurn);
             setTimeLimit(timeLimit);
+            setIsSolo(isSolo); // Solo / multi can only be determined after game starts
+        });
+
+        socket.on("end-game", () => {
+            alert("Game has ended.");
         });
 
         return () => {
@@ -173,10 +179,41 @@ const GameRoom = () => {
         setInput("");
     };
 
+    // Need to first get the current user's life, then update it at TimeOut. 
+    // currentTurn is only a reference to the object of the current user. 
+    const getCurrentUser = () => {
+        const currentUserId = socket.id;
+        return users.find(user => user.id === currentUserId);
+    };
+
     const handleTimeOut = () => {
         if (currentTurn?.id === socket?.id) {
             alert("Time's up! Passing to the next player...");
-            socket.emit("pass-turn", { gameId });
+
+            // If the time is out, check and update the current player's life. 
+            const currentUser = getCurrentUser();
+            if (currentUser.lives > 0) {
+                socket.emit("update-life", { gameId, userId: socket.id, newLives: currentUser.lives - 1 }); 
+                socket.emit("pass-turn", { gameId });
+            }
+            else { // player has lost
+                alert("You have no more lives left. Your out...");
+                // 1. Solo: End the game
+                if (isSolo) {
+                    socket.emit("end-game", { gameId });
+                }
+                // 2. Multi: End only if one player with non-zero lives is left
+                else {
+                    const remainingPlayers = users.filter(user => user.lives > 0);
+                    if (remainingPlayers.length <= 1) {
+                        socket.emit("end-game", { gameId });
+                    } else {
+                        socket.emit("pass-turn", { gameId });
+                    }
+                }
+                
+            }
+
         }
     };
 
