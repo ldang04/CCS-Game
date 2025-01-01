@@ -32,6 +32,7 @@ io.on("connection", (socket) => {
     socket.on("join-room", ({ gameId, nickname, time, lives }) => {
         if (!gameRooms[gameId]) {
             gameRooms[gameId] = {
+                isStarted: false,
                 users: [],
                 locations: [],
                 currentLetter: "A",
@@ -41,7 +42,13 @@ io.on("connection", (socket) => {
                 guessedLocations: new Set(),
             };
         }
-    
+        
+        if(gameRooms[gameId].isStarted){ // cannot join if already started
+            socket.emit('game-started-error'); 
+
+            return; 
+        }
+
         const user = { id: socket.id, name: nickname, lives: gameRooms[gameId].lives };
         gameRooms[gameId].users.push(user);
         socket.join(gameId);

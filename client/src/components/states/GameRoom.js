@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
 import "../../App.css";
@@ -25,6 +25,7 @@ const GameRoom = () => {
     const [markers, setMarkers] = useState([]); // Track Map markers
 
     const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
+    const navigate = useNavigate(); 
 
     const handleCopyGameId = () => {
         navigator.clipboard.writeText(gameId)
@@ -44,6 +45,11 @@ const GameRoom = () => {
             socket.on("location-error", (message) => {
                 alert(message); // Show the error message
             });
+
+            socket.on("game-started-error",() => {
+                alert("Game is already in session."); 
+                navigate('/'); 
+            })
         }
     
         return () => {
@@ -86,7 +92,7 @@ const GameRoom = () => {
             socket.off("initialize-game");
         };
     }, [socket]);
-    
+
     useEffect(() => {
         // Prompt for nickname only once
         if (!nicknameRef.current.trim()) {
