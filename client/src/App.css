@@ -179,3 +179,25 @@ button {
     font-weight: 600; 
     font-size: 1.25em;
 }
+
+.lives-container {
+    position: relative;
+    height: 100%;
+    float: left;
+    padding: 5px;
+    margin-left: 8px;
+}
+
+.heart-image {
+    height: 100%;
+    width: 25px; 
+    vertical-align: middle; 
+}
+
+.lives-count {
+    position: absolute;
+    top: 50%; 
+    left: 50%;
+    transform: translate(-50%, -50%); /* Center the text on the heart*/
+    font-family: "Fredoka";
+}
