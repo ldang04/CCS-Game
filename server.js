@@ -40,6 +40,7 @@ io.on("connection", (socket) => {
                 timeLimit: time ?? 60, // Default to 60 seconds
                 lives: lives ?? 3, // Default to 3 lives
                 guessedLocations: new Set(),
+                isSolo: false, // Default to multiplayer
             };
         }
     
@@ -85,12 +86,12 @@ io.on("connection", (socket) => {
     
     
     // start a game 
-    socket.on("start-game", ({ gameId }) => {
+    socket.on("start-game-pressed", ({ gameId }) => {
         const room = gameRooms[gameId];
     
         // Check if the room exists
         if (!room) {
-            socket.emit("start-game-error", { message: "The specified room does not exist." });
+            socket.emit("start-game-pressed-error", { message: "The specified room does not exist." });
             return;
         }
     
@@ -102,6 +103,15 @@ io.on("connection", (socket) => {
     
         // Mark the game as started
         room.isStarted = true;
+
+        // Logic to set whether the game is solo or multiplayer
+        if (room.users.length === 1) {
+            room.isSolo = true;
+            console.log('Solo game enabled');
+        }  else {
+            room.isSolo = false; // Default back to multiplayer
+            console.log('Multiplayer game enabled');
+        }
     
         // Notify all players that the game has started
         io.to(gameId).emit("game-started", {
@@ -114,6 +124,7 @@ io.on("connection", (socket) => {
                 lives: user.lives, // Include remaining lives if lives are being tracked
             })),
             locations: room.locations, // Send any pre-existing guessed locations
+            isSolo: room.isSolo, // Send whether the game is solo or multiplayer
         });
     
         console.log(`Game started in room ${gameId}`);
@@ -186,6 +197,29 @@ io.on("connection", (socket) => {
         io.to(gameId).emit("update-current-letter", letter);
 
         console.log(`Current letter updated in room ${gameId}: ${letter}`);
+    });
+
+    // Listen for the update-life event (when a user loses a life)
+    socket.on("update-life", ({ gameId, userId, newLives }) => {
+        const room = gameRooms[gameId];
+        if (!room) return;
+
+        // Find the user (current) and update their lives
+        const user = room.users.find(user => user.id === userId);
+        if (user) {
+            user.lives = newLives;
+
+            // Emit the updated users list to all clients in the room
+            io.to(gameId).emit("update-users", room.users);
+        }
+    });
+
+    // Receive end, and notify all clients that the game has ended
+    socket.on("end-game", ({ gameId }) => {
+        const room = gameRooms[gameId];
+        if (!room) return;
+
+        io.to(gameId).emit("game-ended");
     });
 
     // Handle user disconnecting
