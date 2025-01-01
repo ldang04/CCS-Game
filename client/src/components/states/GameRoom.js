@@ -41,41 +41,6 @@ const GameRoom = () => {
     };
 
     useEffect(() => {
-        if (socket) {
-            socket.on("location-error", (message) => {
-                alert(message); // Show the error message
-            });
-
-            socket.on("game-started-error",() => {
-                alert("Game is already in session."); 
-                navigate('/'); 
-            })
-        }
-    
-        return () => {
-            if (socket) {
-                socket.off("location-error");
-            }
-        };
-    }, [socket]);
-
-    // Listen for any new markers, and update the Map component using the incoming markers. 
-    useEffect(() => {
-        if (!socket) return;
-
-        socket.on("add-marker", (markerData) => {
-            console.log("Adding marker to map:", markerData);
-
-            // Add the marker to the state. 
-            setMarkers((prevMarkers) => [...prevMarkers, markerData]);
-        });
-
-        return () => {
-            socket.off("add-marker"); // Cleanup listener on component unmount
-        };
-    }, [socket]);
-
-    useEffect(() => {
         if (!socket) return;
     
         // Handle initialization for a new user
@@ -88,8 +53,27 @@ const GameRoom = () => {
             setCurrentTurn(currentTurn); // Set the current turn
         });
     
+        // Listen for any new markers, and update the Map component using the incoming markers. 
+        socket.on("add-marker", (markerData) => {
+            console.log("Adding marker to map:", markerData);
+
+            // Add the marker to the state. 
+            setMarkers((prevMarkers) => [...prevMarkers, markerData]);
+        });
+
+        socket.on("location-error", (message) => {
+            alert(message); // Show the error message
+        });
+
+        socket.on("game-started-error",() => {
+            alert("Game is already in session."); 
+            navigate('/'); 
+        })
+
         return () => {
             socket.off("initialize-game");
+            socket.off("add-marker"); // Cleanup listener on component unmount
+            socket.off("location-error");
         };
     }, [socket]);
 
@@ -151,26 +135,6 @@ const GameRoom = () => {
     
         // Clear the input field immediately
         setInput("");
-    };
-    
-
-    const validateLocation = async (gameId, location) => {
-        try {
-            const response = await fetch("http://localhost:3001/validate_location", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ gameId, location }), // Send gameId and location as the payload
-            });
-            
-            const data = await response.json(); 
-            
-            return data;
-        } catch (error) {
-            console.error("Error validating location:", error);
-            return null;
-        }
     };
 
     return (
