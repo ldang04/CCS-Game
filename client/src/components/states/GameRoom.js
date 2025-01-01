@@ -70,6 +70,24 @@ const GameRoom = () => {
     }, [socket]);
 
     useEffect(() => {
+        if (!socket) return;
+    
+        // Handle initialization for a new user
+        socket.on("initialize-game", ({ locations, markers, currentLetter, users, currentTurn }) => {
+            console.log("Initializing game with data:", { locations, markers, currentLetter, users, currentTurn });
+            setLocations(locations); // Set previous locations
+            setMarkers(markers); // Set previous markers
+            setCurrentLetter(currentLetter); // Set the current letter
+            setUsers(users); // Set the user list
+            setCurrentTurn(currentTurn); // Set the current turn
+        });
+    
+        return () => {
+            socket.off("initialize-game");
+        };
+    }, [socket]);
+    
+    useEffect(() => {
         // Prompt for nickname only once
         if (!nicknameRef.current.trim()) {
             let userNickname = "";

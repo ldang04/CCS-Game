@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet"; // Icon config
 
@@ -12,8 +12,7 @@ const ZoomPanToMarker = ({ markerPosition }) => {
     useEffect(() => {
         if (markerPosition) {
             // Zoom out, pan to the new marker, and zoom in
-            // flyTo takes in an array {lat, lng}
-            map.flyTo(markerPosition, 13, {
+            map.flyTo(markerPosition, zoomLevel, {
                 duration: 1,  // Duration of the zoom/pan
                 animate: true,
             });
@@ -22,7 +21,6 @@ const ZoomPanToMarker = ({ markerPosition }) => {
 
     return null;
 };
-
 
 const Map = ({ markers }) => {
     // Create the default icon for the marker
@@ -35,32 +33,42 @@ const Map = ({ markers }) => {
         shadowSize: [41, 41], // Shadow size
         shadowAnchor: [12, 41], // Anchor for the shadow
     });
-    
-	return (
-        <div className="map-container" style={{ height: "100%", width: "100%" }}>
-                <MapContainer center={position} zoom={zoomLevel} style={{ height: "100%", width: "100%" }}>
-                    <TileLayer
-                        url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
-                        attribution="&copy; <a href='https://carto.com/attributions'>CartoDB</a>"
-                    />
-                    {/* Marker to show on the map. "markers" passed down in GameRoom */}
-                    {markers.map((marker, index) => (
-                        <Marker
-                            key={index}
-                            position={[marker.latitude, marker.longitude]}
-                            icon={defaultIcon} 
-                        >
-                            <Popup>{marker.name}</Popup>
-                        </Marker>
-                    ))}
 
-                    {/* ZoomPanToMarker will animate the map when a new marker is added */}
-                    {markers.length > 0 && (
-                        <ZoomPanToMarker markerPosition={[markers[markers.length - 1].latitude, markers[markers.length - 1].longitude]} />
-                    )}
-                </MapContainer>
-            </div>
-            );
+    // Prepare positions for Polyline
+    const polylinePositions = markers.map((marker) => [marker.latitude, marker.longitude]);
+
+    return (
+        <div className="map-container" style={{ height: "100%", width: "100%" }}>
+            <MapContainer center={position} zoom={zoomLevel} style={{ height: "100%", width: "100%" }}>
+                <TileLayer
+                    url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
+                    attribution="&copy; <a href='https://carto.com/attributions'>CartoDB</a>"
+                />
+                
+                {/* Render markers */}
+                {markers.map((marker, index) => (
+                    <Marker
+                        key={index}
+                        position={[marker.latitude, marker.longitude]}
+                        icon={defaultIcon} 
+                    >
+                        <Popup>{marker.name}</Popup>
+                    </Marker>
+                ))}
+
+                {/* Render polyline connecting the markers */}
+                {polylinePositions.length > 1 && (
+                    <Polyline positions={polylinePositions} pathOptions={{ color: 'blue', weight: 3 }} />
+                )}
+
+                {/* ZoomPanToMarker will animate the map when a new marker is added */}
+                {markers.length > 0 && (
+                    <ZoomPanToMarker markerPosition={[markers[markers.length - 1].latitude, markers[markers.length - 1].longitude]} />
+                )}
+            </MapContainer>
+        </div>
+    );
 };
 
 export default Map;
+

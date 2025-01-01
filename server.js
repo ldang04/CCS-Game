@@ -30,31 +30,66 @@ io.on("connection", (socket) => {
 
     // Handle user joining a room
     socket.on("join-room", ({ gameId, nickname, time, lives }) => {
-        // Check if the room exists
         if (!gameRooms[gameId]) {
-            gameRooms[gameId] = { 
-                users: [], 
-                locations: [], 
-                currentLetter: "A", 
-                currentTurnIndex: 0, 
-                time: time ?? 60, 
+            gameRooms[gameId] = {
+                users: [],
+                locations: [],
+                currentLetter: "A",
+                currentTurnIndex: 0,
+                time: time ?? 60,
                 lives: lives ?? 3,
-                guessedLocations: new Set() // Track guessed locations for this room
+                guessedLocations: new Set(),
             };
         }
     
-        // Add the user to the room
         const user = { id: socket.id, name: nickname, lives: gameRooms[gameId].lives };
         gameRooms[gameId].users.push(user);
         socket.join(gameId);
     
-        // Broadcast the updated user list and turn to the room
-        io.to(gameId).emit("update-users", gameRooms[gameId].users);
-        io.to(gameId).emit("update-turn", gameRooms[gameId].users[gameRooms[gameId].currentTurnIndex]);
+        // Send the previous locations and markers to the newly joined user
+        const room = gameRooms[gameId];
+        socket.emit("initialize-game", {
+            locations: room.locations,
+            markers: room.locations.map((loc) => {
+                const locationData = Array.from(locationsMap.values()).find(
+                    (item) => item.name_standard === loc
+                );
+                return locationData
+                    ? {
+                          latitude: locationData.latitude,
+                          longitude: locationData.longitude,
+                          name: locationData.name_standard,
+                      }
+                    : null;
+            }).filter(Boolean),
+            currentLetter: room.currentLetter,
+            users: room.users,
+            currentTurn: room.users[room.currentTurnIndex],
+        });
+    
+        // Notify all users in the room about the updated user list and current turn
+        io.to(gameId).emit("update-users", room.users);
+        io.to(gameId).emit("update-turn", room.users[room.currentTurnIndex]);
     
         console.log(`User ${nickname} joined room ${gameId}`);
     });
     
+    
+    // start a game 
+    socket.on("start-game", ({ gameId }) => {
+        if (!gameRooms[gameId]) return;
+    
+        gameRooms[gameId].isStarted = true;
+    
+        // Notify all players that the game has started
+        io.to(gameId).emit("game-started", {
+            currentLetter: gameRooms[gameId].currentLetter,
+            currentTurn: gameRooms[gameId].users[gameRooms[gameId].currentTurnIndex],
+        });
+    
+        console.log(`Game started in room ${gameId}`);
+    });
+
     // Handle adding a location
     socket.on("add-location", ({ gameId, location }) => {
         if (!gameRooms[gameId]) return;
@@ -64,26 +99,32 @@ io.on("connection", (socket) => {
     
         if (validationResponse.success) {
             const room = gameRooms[gameId];
+            const locationData = validationResponse.location_data;
     
             // Add the location to the room's location list
-            const location_data = validationResponse.location_data;
-            room.locations.push(location_data.name_standard);
+            room.locations.push(locationData.name_standard);
+    
+            // Calculate the new current letter
+            const lastLetter = locationData.name_standard.slice(-1).toUpperCase();
+    
+            // Update the current letter for the room
+            room.currentLetter = lastLetter;
+            io.to(gameId).emit("update-current-letter", lastLetter); // Emit only on success
     
             // Advance to the next turn
             room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
             const nextTurnUser = room.users[room.currentTurnIndex];
-            
-            // Now, prepare to add marker for the guessed location on the map. 
-            const markerData = {
-                name: locationData.name_standard,
-                latitude: locationData.latitude,
-                longitude: locationData.longitude,
-            };    
-
-            // Broadcast the updated locations list, next turn, and marker data
-            io.to(gameId).emit("add-marker", markerData);
+    
+            // Broadcast the updated locations list and next turn
             io.to(gameId).emit("update-locations", room.locations);
             io.to(gameId).emit("update-turn", nextTurnUser);
+    
+            // Emit the new marker to all clients in the room
+            io.to(gameId).emit("add-marker", {
+                latitude: locationData.latitude,
+                longitude: locationData.longitude,
+                name: locationData.name_standard,
+            });
     
             console.log(`Location added in room ${gameId}: ${location}`);
         } else {
@@ -91,8 +132,8 @@ io.on("connection", (socket) => {
             socket.emit("location-error", validationResponse.message);
             console.log(validationResponse.message);
         }
-    });
-
+    });    
+    
     // Handle changing the current letter
     socket.on("change-current", ({ gameId, letter }) => {
         if (!gameRooms[gameId]) return;
