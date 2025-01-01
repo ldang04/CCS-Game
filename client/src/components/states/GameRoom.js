@@ -7,6 +7,7 @@ import "../../App.css";
 import Map from "../helpers/Map";
 import Header from "../helpers/Header";
 import Timer from "../helpers/Timer";
+import Lives from "../helpers/Lives";
 
 const GameRoom = () => {
     const { gameId } = useParams();
@@ -198,8 +199,13 @@ const GameRoom = () => {
                             <ul>
                                 <li className="li-header">Players</li>
                                 {users.map((user) => (
-                                    <li className="user-li" key={user.id} style={{ fontWeight: user.id === currentTurn?.id ? "bold" : "normal" }}>
-                                        {user.name}
+                                    <li className="user-li" 
+                                        key={user.id} 
+                                        style={{ fontWeight: user.id === currentTurn?.id ? "bold" : "normal",       display: "flex",
+                                        alignItems: "center",}}
+                                    >
+                                        <Lives numLives={user.lives} />
+                                        <span>{user.name}</span>
                                     </li>
                                 ))}
                             </ul>
