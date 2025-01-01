@@ -30,6 +30,10 @@ h1 {
 .header-container {
     margin: 0 0 2em 0 ;
 }
+
+.header-container h1:hover {
+    cursor: pointer;
+}
 /* NEW GAME STATE ==================================================================== */
 
 #create-btn {
