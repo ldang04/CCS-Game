@@ -60,7 +60,7 @@ const NewGame = () => {
     }
 
     return (
-        <div>
+        <div className="game-wrapper-container">
             <Header />
             <div className="main-container">
 

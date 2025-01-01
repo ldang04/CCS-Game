@@ -174,7 +174,7 @@ const GameRoom = () => {
     };
 
     return (
-        <div className="main-container-game">
+        <div className="game-wrapper-container">
             <Header />
 
             {!isJoined ? (
@@ -203,7 +203,8 @@ const GameRoom = () => {
                             </ul>
                         </div>
                     </div>
-
+                    
+                    
                     <p className="current-p">
                         Current letter: {currentLetter},{" "}
                         {currentTurn?.id === socket?.id ? "Your turn" : `${currentTurn?.name}'s turn`}

@@ -1,21 +1,53 @@
+/* HEADER ============ */
+.header-container {
+    margin: 0 0 1em 0 ;
+}
+
+.header-container h1:hover {
+    cursor: pointer;
+}
+
+/* ================================== */
+
 body {
     padding: 2em;
-}
+    display: flex;
+    height: 100vh; 
+    justify-content: center;
+    align-items: center;
+    /* background-color: #454cf7;
+    opacity: 1;
+    background-image: radial-gradient(#ffffff 1.4000000000000001px, #454cf7 1.4000000000000001px);
+    background-size: 28px 28px; */
+  }
 
 h1 {
     font-family: "Fredoka";
     font-size: 3.5em;
 }
 
+p {
+    font-family: "Fredoka";
+}
+
+button {
+    font-family: "Fredoka";
+}
 .main-container {
     display: flex;
     justify-content: center;
-    width: 60%;
+    width: 70vw;
     margin: 0 auto;
+    padding: 2em;
+    border-radius: 0.75em;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    font-family: "Fredoka";
+    background: white;
 }
 
 .main-container-game {
- 
+    background: red;
 }
 
 .main-left {
@@ -27,13 +59,7 @@ h1 {
     flex: 0 0 50%; 
 }
 
-.header-container {
-    margin: 0 0 2em 0 ;
-}
 
-.header-container h1:hover {
-    cursor: pointer;
-}
 /* NEW GAME STATE ==================================================================== */
 
 #create-btn {
@@ -72,10 +98,10 @@ h1 {
 /* PLAYING STATE ==================================================================== */
 
 .mid-container {
+    padding: 1em;
     display: flex; /* Enable Flexbox */
-    width: 80%;
+    width: 70vw;
     margin: 0 auto;
-    /* background: red; */
     justify-content: space-between; /* Adjust spacing between children */
     align-items: stretch; /* Make children stretch vertically to match parent height */
     height: 25em; /* Ensure the parent has a height for children to stretch */
