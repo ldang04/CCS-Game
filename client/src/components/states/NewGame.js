@@ -136,6 +136,9 @@ const NewGame = () => {
                     </div>
                 </div>
             </div>
+            <div className="landing-footer">
+                <a href="https://github.com/ldang04/CCS-Game">Source Code</a>
+            </div>
         </div>
     );
 };

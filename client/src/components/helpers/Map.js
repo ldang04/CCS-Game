@@ -39,7 +39,7 @@ const Map = ({ markers }) => {
 
     return (
         <div className="map-container" style={{ height: "100%", width: "100%" }}>
-            <MapContainer center={position} zoom={zoomLevel} style={{ height: "100%", width: "100%" }}>
+            <MapContainer center={position} zoom={zoomLevel} style={{ height: "100%", width: "100%", borderRadius: "1em", overflow: "hidden", }}>
                 <TileLayer
                     url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
                     attribution="&copy; <a href='https://carto.com/attributions'>CartoDB</a>"
