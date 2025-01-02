@@ -229,7 +229,7 @@ io.on("connection", (socket) => {
     
             // Broadcast the updated locations list and next turn
             io.to(gameId).emit("update-locations", room.locations);
-            io.to(gameId).emit("update-turn", nextTurnUser);
+            io.to(gameId).emit("update-turn", nextTurnUser, room.timeLeft);
 
             // Reset timer
             startTurnTimer(gameId);
