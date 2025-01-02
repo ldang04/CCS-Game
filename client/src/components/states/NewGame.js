@@ -22,18 +22,15 @@ const NewGame = () => {
             alert("Please enter a valid time limit.");
             return;
         }
-        
-        if(input.trim()){ // check if join code has been added
-            navigate(`/game/${input}`);
-        } else {
-              // Fetch a new game ID
-            const response = await fetch("http://localhost:3001/create_game");
-            const data = await response.json();
-            const gameId = data.gameId;
-        
-            // Navigate to the GameRoom with the nickname, timeLimit, and lives
-            navigate(`/game/${gameId}`, { state: { nickname, timeLimit: time, lives } });
-        }
+    
+        // Fetch a new game ID
+        const response = await fetch("http://localhost:3001/create_game");
+        const data = await response.json();
+        const gameId = data.gameId;
+    
+        // Navigate to the GameRoom with the nickname, timeLimit, and lives
+        navigate(`/game/${gameId}`, { state: { nickname, timeLimit: time, lives } });
+
     };    
 
     const handleJoin = async () => {
@@ -44,11 +41,9 @@ const NewGame = () => {
     
         // Check if the room exists
         try {
-            console.log(input);
             const response = await fetch(`http://localhost:3001/check-room/${input}`);
             const data = await response.json();
-            
-            console.log(data);
+    
             if (data.exists) {
                 navigate(`/game/${input}`, { state: { nickname } });
             } else {
@@ -107,10 +102,10 @@ const NewGame = () => {
                                 />
                         </div>
                         
-                        { !input.trim() ? <h3> OR </h3> : <></>}
-                        
+                        <h3> OR </h3>
+
                         <button className="btn color-btn" id="create-btn" onClick={handleCreateGame}>
-                            {input.trim() ? "Enter existing room" : "Create a new game"}
+                            Create a new game
                         </button>
                     </div>
                 </div>
@@ -135,7 +130,7 @@ const NewGame = () => {
                             value={lives}
                             onChange={handleLivesChange}
                             className="join-input number-input"
-                            min="1"
+                            min="0"
                         />
 
                     </div>
