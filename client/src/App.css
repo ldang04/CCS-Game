@@ -48,7 +48,7 @@ button {
 .main-container {
     display: flex;
     justify-content: center;
-    width: 70vw;
+    width: 60vw;
     margin: 0 auto;
     padding: 2em;
     border-radius: 0.75em;
@@ -125,11 +125,34 @@ input::target-text {
     height: 25em; /* Ensure the parent has a height for children to stretch */
 }
 
-.users-list-container {
-    flex: 0 0 15%;
+.map-container {
+    flex: 7;
+    background: lightgray; 
     height: 100%;
+    border-radius: 0.5em;
+    overflow: hidden;
+    border: 1px solid gray; 
+}
+
+.users-list-container {
+    flex: 1.5; 
+    height: 100%;
+    overflow-y: auto; /* Scroll if content exceeds height */
+}
+
+.places-list-container {
+    flex: 1.5; 
+    height: 100%;
+    background: white;
+    margin: 0 0 0 0.5em;
+    border-radius: 0.5em;
+    border: 1px solid gray;
     overflow-y: scroll;
-    padding: 0 0.5em 0 0;
+    padding: 0.5em 0 0 0;
+}
+
+.places-list-container p, .places-list-container li {
+    color: black;
 }
 
 .timer {
@@ -142,19 +165,13 @@ input::target-text {
     font-size: 1.15em;
 }
 
-.map-container {
-    flex: 0 0 70%;
-    background: lightgray; 
-    height: 25em; 
-}
-
 .user-li {
     padding: 0.5em;
     font-family: "Fredoka"; 
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-    border: 1px solid black;
+    border: 1px solid gray;
     border-radius: 0.5em;
-    margin: 0 0.2em 0 0;
+    margin: 0 0.5em 0 0;
     background: white;
     color: black;
 }
@@ -167,17 +184,6 @@ input::target-text {
   color: white;
 }
 
-.places-list-container {
-    flex: 0 0 15%;
-    height: 100%;
-    overflow-y: scroll;
-    color: white;
-    font-family: "Fredoka";
-    border-radius: 0 0.5em 0.5em 0;
-    background-color: #0044ff; 
-}
-
-
 .input-container {
     display: flex; 
     justify-content: center;
@@ -187,13 +193,14 @@ input::target-text {
 }
 
 .main-input {
-    padding: 0.75em;
+    padding: 1em;
     width: 100%;
-    margin: 0.5em 0 0.75em 0;
+    border-radius: 0.5em;
+    border: 1px solid gray;
 }
 
 .btn {
-    padding: 0.75em;
+    padding: 0.5em 0.75em 0.5em 0.75em;
     display: inline-block;
 }
 
@@ -239,6 +246,7 @@ input::target-text {
 
 .footer-container {
     color: white;
+    margin: 0.5em;
 }
 
 .footer-container button {
@@ -246,8 +254,24 @@ input::target-text {
     border-radius: 0.2em;
 }
 
+/* landing page footer */
+.landing-footer {
+    color: white; 
+    font-weight: 600; 
+    font-size: 1em;
+    font-family: "Fredoka";
+    text-align: right;
+    width: 60vw;
+    text-decoration: underline;
+    margin-top: 0.5em;
+}
+
 .hide {
     display: inline-block;
+}
+
+.show {
+    display: none;
 }
 
 /* RESPONSIVE BREAKPOINT:  */
@@ -255,6 +279,10 @@ input::target-text {
 
     .hide {
         display: none;
+    }
+
+    .show {
+        display: inline-block;
     }
 
     .header-container {
@@ -268,11 +296,12 @@ input::target-text {
     }
 
     .header-container p {
-        font-size: 1em;
+        font-size: 0.9em;
     }
 
     .li-header {
         font-size: 1em;
+        text-decoration: underline;
     }
 
     .user-li {
@@ -286,27 +315,38 @@ input::target-text {
 
     .map-container {
         flex: 0 0 80%;
-        background: green;
     }
 
     .users-list-container {
         flex: 0 0 20%;
     }
 
-    .places-list-container {
-        padding-left: 0.5em;
-        background: none;
-    }
-
-    .places-list-container li{
-        font-size: 0.75em;
-    }
-
     .mid-container {
         width: 90vw;
         padding: 0;
     }
+
+    .places-list-container-compact {
+        background: white;
+        width: 90vw;
+        margin-top: 1em;
+        border-radius: 0.5em;
+        border: 1px solid gray;
+        padding: 0.5em;
+    }
+
+    .places-list-container-compact p {
+        color: black;
+        text-decoration: none;
+        font-size: 1em;
+    }
     
+    .places-list-container-compact li {
+        color: black;
+        text-decoration: none;
+        font-size: 1.25em;
+    }
+
     .timer {
         font-size: 1em;
         width: 80vw;
@@ -316,7 +356,7 @@ input::target-text {
         display: flex;
         flex-direction: column; /* Stack children vertically */
         justify-content: center;
-        width: 70vw;
+        width: 90vw;
         margin: 0 auto;
         padding: 2em;
         border-radius: 0.75em;
@@ -339,10 +379,14 @@ input::target-text {
     }
 
     .footer-container {
-        font-size: 0.9em;
+        font-size: 0.75em;
     }
 
     .color-btn {
         font-size: 1em;
+    }
+
+    .input-container {
+        width: 90vw;
     }
 }

@@ -12,46 +12,49 @@ const NewGame = () => {
 
     const navigate = useNavigate(); // Initialize useNavigate
 
-    const handleCreateGame = async () => {
-        if (!nickname.trim()) {
-            alert("Enter a nickname");
-            return;
-        }
-    
-        if (time <= 0) {
-            alert("Please enter a valid time limit.");
-            return;
-        }
-    
-        // Fetch a new game ID
-        const response = await fetch("http://localhost:3001/create_game");
-        const data = await response.json();
-        const gameId = data.gameId;
-    
-        // Navigate to the GameRoom with the nickname, timeLimit, and lives
-        navigate(`/game/${gameId}`, { state: { nickname, timeLimit: time, lives } });
-
-    };    
+    useEffect(() => {
+        console.log(input);
+    }, [input])
 
     const handleJoin = async () => {
         if (!nickname.trim()) {
             alert("Enter a nickname");
             return;
         }
-    
-        // Check if the room exists
-        try {
-            const response = await fetch(`http://localhost:3001/check-room/${input}`);
-            const data = await response.json();
-    
-            if (data.exists) {
-                navigate(`/game/${input}`, { state: { nickname } });
-            } else {
-                alert("Room does not exist. Please try again.");
+     
+        if (input.trim()) {
+            console.log("sldjflsfs");
+            try {
+                // Check if the room exists
+                const response = await fetch(`http://localhost:3001/check-room/${input}`);
+                const data = await response.json();
+                
+                console.log("data");
+                console.log(data);
+                if (data.exists) {
+                    // Navigate to the GameRoom with the nickname
+                    navigate(`/game/${input}`, { state: { nickname } });
+                } else {
+                    alert("Room does not exist. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error checking room:", error);
+                alert("An error occurred while checking the room. Please try again.");
             }
-        } catch (error) {
-            console.error("Error checking room:", error);
-            alert("An error occurred while checking the room. Please try again.");
+        } else {
+            // Create a new game
+            try {
+                // Fetch a new game ID
+                const response = await fetch("http://localhost:3001/create_game");
+                const data = await response.json();
+                const gameId = data.gameId;
+    
+                // Navigate to the GameRoom with the nickname, timeLimit, and lives
+                navigate(`/game/${gameId}`, { state: { nickname, timeLimit: time, lives } });
+            } catch (error) {
+                console.error("Error creating game:", error);
+                alert("An error occurred while creating the game. Please try again.");
+            }
         }
     };
 
@@ -102,10 +105,12 @@ const NewGame = () => {
                                 />
                         </div>
                         
-                        <h3> OR </h3>
+                        <h3>
+                            {input.trim()? "" : "OR"}
+                        </h3>
 
-                        <button className="btn color-btn" id="create-btn" onClick={handleCreateGame}>
-                            Create a new game
+                        <button className="btn color-btn" id="create-btn" onClick={handleJoin}>
+                            {!input.trim()? "Create a game" : "Join existing game"}
                         </button>
                     </div>
                 </div>
@@ -135,6 +140,9 @@ const NewGame = () => {
 
                     </div>
                 </div>
+            </div>
+            <div className="landing-footer">
+                <a href="https://github.com/ldang04/CCS-Game">Source Code</a>
             </div>
         </div>
     );

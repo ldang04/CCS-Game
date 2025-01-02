@@ -254,8 +254,9 @@ const GameRoom = () => {
 
                         <Map markers={markers} /> {/* Pass markers to Map */}
                         <div className="places-list-container hide">
+                            <p className="li-header">Previous:</p>
+                            
                             <ul id="previous-ul">
-                                <li className="li-header">Previous:</li>
                                 {locations.map((location, index) => (
                                     <li key={index}>{location}</li>
                                 ))}
@@ -277,23 +278,32 @@ const GameRoom = () => {
                         </>
                     )}
 
-
-                    <div className="input-container">
-                        <input
-                            className="main-input"
-                            type="text"
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyDown={(e) => {
-                                if(e.key === "Enter"){
-                                    handleLocationEnter()
-                                }
-                            }}
-                            placeholder={`Enter a location starting with "${currentLetter}"`}
-                            disabled={currentTurn?.id !== socket?.id} // Disable input if not user's turn
-                        />
-                    </div>
+                <div className="input-container">
+                    <input
+                        className="main-input"
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyDown={(e) => {
+                            if(e.key === "Enter"){
+                                handleLocationEnter()
+                            }
+                        }}
+                        placeholder={`Enter a location starting with "${currentLetter}"`}
+                        disabled={currentTurn?.id !== socket?.id} // Disable input if not user's turn
+                    />
+                </div>
                 
+                <div className="places-list-container-compact show">
+                        <p className="li-header">Previous:</p>
+                        
+                        <ul id="previous-ul">
+                            {locations.map((location, index) => (
+                                <li key={index}>{location}</li>
+                            ))}
+                        </ul>
+                    </div>
+
                 <div className="footer-container">
                     <p>
                         Join code: {gameId}{" "}
