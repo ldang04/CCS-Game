@@ -29,7 +29,7 @@ io.on("connection", (socket) => {
     console.log("A user connected:", socket.id);
 
     // Handle user joining a room
-    socket.on("join-room", ({ gameId, nickname, time, lives }) => {
+    socket.on("join-room", ({ gameId, nickname, timeLimit, lives }) => {
         if (!gameRooms[gameId]) {
             gameRooms[gameId] = {
                 isStarted: false,
@@ -37,7 +37,9 @@ io.on("connection", (socket) => {
                 locations: [],
                 currentLetter: "A",
                 currentTurnIndex: 0,
-                timeLimit: time ?? 60, // Default to 60 seconds
+                timeLimit: timeLimit ?? 60, // Default to 60 seconds
+                timeLeft: timeLimit ?? 60, // Set to the timeLimit
+                timer: null, // Timer for the current turn
                 lives: lives ?? 3, // Default to 3 lives
                 guessedLocations: new Set(),
                 isSolo: false, // Default to multiplayer
@@ -76,6 +78,8 @@ io.on("connection", (socket) => {
             users: room.users,
             currentTurn: room.users[room.currentTurnIndex],
             timeLimit: room.timeLimit, // Send the room's time limit
+            timeLeft: room.timeLeft,
+            timer: room.timer,
         });
     
         io.to(gameId).emit("update-users", room.users);
@@ -118,6 +122,8 @@ io.on("connection", (socket) => {
             currentLetter: room.currentLetter,
             currentTurn: room.users[room.currentTurnIndex],
             timeLimit: room.timeLimit,
+            timeLeft: room.timeLeft,
+            timer: room.timer,
             users: room.users.map((user) => ({
                 id: user.id,
                 name: user.name,
@@ -126,9 +132,65 @@ io.on("connection", (socket) => {
             locations: room.locations, // Send any pre-existing guessed locations
             isSolo: room.isSolo, // Send whether the game is solo or multiplayer
         });
+
+        // Start the timer for the round: 
+        startTurnTimer(gameId);
     
         console.log(`Game started in room ${gameId}`);
     });
+
+    const startTurnTimer = (gameId) => {
+        const room = gameRooms[gameId];
+        if (!room) return;
+
+        if (room.timer) {
+            clearInterval(room.timer);
+            room.timer = null; // Explicitly nullify for clarity
+        }
+
+        // Reset timeLeft to the timeLimit
+        room.timeLeft = room.timeLimit;
+        
+        // Start the timer, decrementing the timeLeft every second
+        room.timer = setInterval(() => {
+            room.timeLeft -= 1;
+    
+            // Emit the updated timeLeft to all clients in the room
+            io.to(gameId).emit("update-timer", room.timeLeft, room.timer);
+    
+            // When time runs out
+            if (room.timeLeft <= 0) {
+                clearInterval(room.timer); // Stop the timer for this turn
+    
+                const currentTurnUser = room.users[room.currentTurnIndex];
+    
+                // Handle the case when the current user runs out of time
+                if (currentTurnUser.lives > 0) {
+                    currentTurnUser.lives -= 1;
+                    io.to(gameId).emit("update-users", room.users); // Update all clients
+                    io.to(currentTurnUser.id).emit("timer-notification", "Time's up!");
+                } else {
+                    io.to(currentTurnUser.id).emit("timer-notification", "You have no more lives left. You're out...");
+    
+                    // Check game end conditions
+                    if (room.isSolo) {  // Case 1: Solo: End the game
+                        io.to(gameId).emit("end-game", { reason: "Out of lives" });
+                        return;
+                    }
+                    // else, check multiplayer end condition
+                    const remainingPlayers = room.users.filter(user => user.lives > 0);
+                    if (remainingPlayers.length <= 1) {
+                        io.to(gameId).emit("end-game", { reason: "Last player standing" });
+                        return;
+                    }
+                }
+    
+                // Pass turn! Call the pass-turn event. 
+                io.to(gameId).emit("pass-turn", { gameId });
+
+            }
+        }, 1000); // Decrement every second
+    };
     
     socket.on("pass-turn", ({ gameId }) => {
         const room = gameRooms[gameId];
@@ -136,10 +198,24 @@ io.on("connection", (socket) => {
     
         // Move to the next turn
         room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
-        const nextTurnUser = room.users[room.currentTurnIndex];
-    
+
+        // Ensure the next player has lives: skip until we find the next valid player 
+        let nextTurnUser = room.users[room.currentTurnIndex];
+        while (nextTurnUser.lives <= 0) {
+            room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
+            nextTurnUser = room.users[room.currentTurnIndex];
+        }
+
+        room.timeLeft = room.timeLimit; // Reset the time for the next turn
+        
+        io.to(gameId).emit("update-timer", room.timeLeft);
+
         // Notify all clients
-        io.to(gameId).emit("update-turn", nextTurnUser);
+        io.to(gameId).emit("update-turn", {
+            user: nextTurnUser,
+            timeLeft: room.timeLeft,
+        });
+        startTurnTimer(gameId);
     });
 
     // Handle adding a location
@@ -170,6 +246,9 @@ io.on("connection", (socket) => {
             // Broadcast the updated locations list and next turn
             io.to(gameId).emit("update-locations", room.locations);
             io.to(gameId).emit("update-turn", nextTurnUser);
+
+            // Reset timer
+            startTurnTimer(gameId);
     
             // Emit the new marker to all clients in the room
             io.to(gameId).emit("add-marker", {

@@ -27,6 +27,8 @@ const GameRoom = () => {
     const [copyIdSuccess, setCopyIdSuccess] = useState(false); // Track copy status
     const [markers, setMarkers] = useState([]); // Track Map markers
     const [timeLimit, setTimeLimit] = useState(null); // Initially null, to be set by server
+    const [timeLeft, setTimeLeft] = useState(null); // Initially null, to be set by server
+    const [timer, setTimer] = useState(null); // Timer reference
     const [isStarted, setIsStarted] = useState(false); 
 
     const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
@@ -62,7 +64,7 @@ const GameRoom = () => {
         if (!socket) return;
     
         // Handle initialization for a new user
-        socket.on("initialize-game", ({ locations, markers, currentLetter, users, currentTurn, timeLimit }) => {
+        socket.on("initialize-game", ({ locations, markers, currentLetter, users, currentTurn, timeLimit, timeLeft, timer}) => {
             console.log("Initializing game with data:", { locations, markers, currentLetter, users, currentTurn, timeLimit });
             setLocations(locations);
             setMarkers(markers);
@@ -70,6 +72,8 @@ const GameRoom = () => {
             setUsers(users);
             setCurrentTurn(currentTurn);
             setTimeLimit(timeLimit); // Set timeLimit from server
+            setTimeLeft(timeLeft); // Set timeLeft from server
+            setTimer(timer);
         });
     
         // Listen for any new markers, and update the Map component using the incoming markers. 
@@ -94,12 +98,25 @@ const GameRoom = () => {
         })
 
         // Handle initialization for a new user
-        socket.on("game-started", ({ currentLetter, currentTurn, timeLimit, users, locations, isSolo}) => {
+        socket.on("game-started", ({ currentLetter, currentTurn, timeLimit, timeLeft, timer, users, locations, isSolo}) => {
             setIsStarted(true);
             setCurrentLetter(currentLetter);
             setCurrentTurn(currentTurn);
             setTimeLimit(timeLimit);
+            setTimeLeft(timeLeft);
+            setTimer(timer);
             setIsSolo(isSolo); // Solo / multi can only be determined after game starts
+        });
+
+        // Listen and update the timer.
+        socket.on("update-timer", (newTimeLeft, timer) => {
+            setTimeLeft(newTimeLeft);
+            setTimer(timer);
+        });
+
+        // Listen for timer notifications
+        socket.on("timer-notification", (message) => {
+            alert(message);
         });
 
         socket.on("end-game", () => {
@@ -136,7 +153,7 @@ const GameRoom = () => {
         socket.emit("join-room", { 
             gameId, 
             nickname: nicknameRef.current, 
-            time: state?.timeLimit || 60, // Fallback to default if state is null
+            timeLimit: state?.timeLimit || 60, // Fallback to default if state is null
             lives: state?.lives || 3 // Fallback to default if state is null
         });
 
@@ -155,8 +172,10 @@ const GameRoom = () => {
             setCurrentLetter(newLetter);
         });
 
-        socket.on("update-turn", (turnUser) => {
+        socket.on("update-turn", (turnUser, timeLeft) => {
             setCurrentTurn(turnUser);
+            setTimeLeft(timeLeft);
+            console.log(timeLeft);
         });
 
         return () => {
@@ -186,39 +205,6 @@ const GameRoom = () => {
         return users.find(user => user.id === currentUserId);
     };
 
-    const handleTimeOut = () => {
-        const currentUser = getCurrentUser();
-
-        // Ensure the function only executes if the client is the current turn player
-        if (currentTurn?.id !== socket?.id) {
-            return;
-        }
-        
-        alert("Time's up! Passing to the next player...");
-
-        // If the time is out, check and update the current player's life. 
-        if (currentUser.lives > 0) {
-            socket.emit("update-life", { gameId, userId: socket.id, newLives: currentUser.lives - 1 }); 
-            socket.emit("pass-turn", { gameId });
-        }
-        else { // player has lost
-            alert("You have no more lives left. Your out...");
-            // 1. Solo: End the game
-            if (isSolo) {
-                socket.emit("end-game", { gameId });
-            }
-            // 2. Multi: End only if one player with non-zero lives is left
-            else {
-                const remainingPlayers = users.filter(user => user.lives > 0);
-                if (remainingPlayers.length <= 1) {
-                    socket.emit("end-game", { gameId });
-                } else {
-                    socket.emit("pass-turn", { gameId });
-                }
-            }
-
-        }
-    };
 
     return (
         <div className="game-wrapper-container">
@@ -229,7 +215,7 @@ const GameRoom = () => {
             ) : (
                 <>
                 {isStarted ? (
-                    <Timer key={currentTurn?.id} timeLimit={timeLimit} onTimeOut={handleTimeOut} />
+                    <Timer key={currentTurn?.id} timeLeft={timeLeft} />
                 ) : (
                     <>
                     </>
