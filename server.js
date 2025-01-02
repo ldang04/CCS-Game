@@ -168,7 +168,7 @@ io.on("connection", (socket) => {
                 if (currentTurnUser.lives > 0) {
                     currentTurnUser.lives -= 1;
                     io.to(gameId).emit("update-users", room.users); // Update all clients
-                    io.to(currentTurnUser.id).emit("timer-notification", "Time's up!");
+                    // io.to(currentTurnUser.id).emit("timer-notification", "Time's up!");
                 } else {
                     io.to(currentTurnUser.id).emit("timer-notification", "You have no more lives left. You're out...");
     
@@ -186,13 +186,13 @@ io.on("connection", (socket) => {
                 }
     
                 // Pass turn! Call the pass-turn event. 
-                io.to(gameId).emit("pass-turn", { gameId });
+                passTurn(gameId);
 
             }
         }, 1000); // Decrement every second
     };
-    
-    socket.on("pass-turn", ({ gameId }) => {
+
+    const passTurn = (gameId) => {
         const room = gameRooms[gameId];
         if (!room) return;
     
@@ -216,7 +216,7 @@ io.on("connection", (socket) => {
             timeLeft: room.timeLeft,
         });
         startTurnTimer(gameId);
-    });
+    }
 
     // Handle adding a location
     socket.on("add-location", ({ gameId, location }) => {
