@@ -142,81 +142,65 @@ io.on("connection", (socket) => {
     const startTurnTimer = (gameId) => {
         const room = gameRooms[gameId];
         if (!room) return;
-
+    
         if (room.timer) {
             clearInterval(room.timer);
-            room.timer = null; // Explicitly nullify for clarity
+            room.timer = null;
         }
-
-        // Reset timeLeft to the timeLimit
+    
         room.timeLeft = room.timeLimit;
-        
-        // Start the timer, decrementing the timeLeft every second
+    
         room.timer = setInterval(() => {
             room.timeLeft -= 1;
     
-            // Emit the updated timeLeft to all clients in the room
-            io.to(gameId).emit("update-timer", room.timeLeft, room.timer);
+            io.to(gameId).emit("update-timer", room.timeLeft);
     
-            // When time runs out
             if (room.timeLeft <= 0) {
-                clearInterval(room.timer); // Stop the timer for this turn
+                clearInterval(room.timer);
     
                 const currentTurnUser = room.users[room.currentTurnIndex];
-    
-                // Handle the case when the current user runs out of time
                 if (currentTurnUser.lives > 0) {
                     currentTurnUser.lives -= 1;
-                    io.to(gameId).emit("update-users", room.users); // Update all clients
-                    // io.to(currentTurnUser.id).emit("timer-notification", "Time's up!");
-                } else {
-                    io.to(currentTurnUser.id).emit("timer-notification", "You have no more lives left. You're out...");
-    
-                    // Check game end conditions
-                    if (room.isSolo) {  // Case 1: Solo: End the game
-                        io.to(gameId).emit("end-game", { reason: "Out of lives" });
-                        return;
-                    }
-                    // else, check multiplayer end condition
-                    const remainingPlayers = room.users.filter(user => user.lives > 0);
-                    if (remainingPlayers.length <= 1) {
-                        io.to(gameId).emit("end-game", { reason: "Last player standing" });
-                        return;
-                    }
+                    io.to(gameId).emit("update-users", room.users);
                 }
     
-                // Pass turn! Call the pass-turn event. 
+                const remainingPlayers = room.users.filter(user => user.lives > 0);
+                if (remainingPlayers.length === 1 && !(room.isSolo)) {
+                    io.to(gameId).emit("end-game", { reason: "Last player standing" });
+                    return;
+                } else if (room.isSolo && (currentTurnUser.lives === 0)){
+                    io.to(gameId).emit("end-game", { reason: "Last player standing" });
+                    return; 
+                }
+    
                 passTurn(gameId);
-
             }
-        }, 1000); // Decrement every second
-    };
+        }, 1000);
+    };    
 
     const passTurn = (gameId) => {
         const room = gameRooms[gameId];
         if (!room) return;
     
         // Move to the next turn
-        room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
-
-        // Ensure the next player has lives: skip until we find the next valid player 
-        let nextTurnUser = room.users[room.currentTurnIndex];
-        while (nextTurnUser.lives <= 0) {
+        let nextTurnUser;
+        do {
             room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
             nextTurnUser = room.users[room.currentTurnIndex];
-        }
-
+        } while (nextTurnUser.lives <= 0); // Skip users with no lives
+    
         room.timeLeft = room.timeLimit; // Reset the time for the next turn
         
         io.to(gameId).emit("update-timer", room.timeLeft);
-
+    
         // Notify all clients
         io.to(gameId).emit("update-turn", {
             user: nextTurnUser,
             timeLeft: room.timeLeft,
         });
+    
         startTurnTimer(gameId);
-    }
+    };        
 
     // Handle adding a location
     socket.on("add-location", ({ gameId, location }) => {

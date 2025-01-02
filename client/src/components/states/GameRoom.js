@@ -54,7 +54,7 @@ const GameRoom = () => {
         if (socket) {
             socket.emit("start-game-pressed", { gameId });
         }
-    };    
+    };
 
     useEffect(() => {
         console.log(state);
@@ -109,9 +109,8 @@ const GameRoom = () => {
         });
 
         // Listen and update the timer.
-        socket.on("update-timer", (newTimeLeft, timer) => {
+        socket.on("update-timer", (newTimeLeft) => {
             setTimeLeft(newTimeLeft);
-            setTimer(timer);
         });
 
         // Listen for timer notifications
@@ -172,10 +171,9 @@ const GameRoom = () => {
             setCurrentLetter(newLetter);
         });
 
-        socket.on("update-turn", (turnUser, timeLeft) => {
-            setCurrentTurn(turnUser);
+        socket.on("update-turn", ({ user, timeLeft }) => {
+            setCurrentTurn(user);
             setTimeLeft(timeLeft);
-            console.log(timeLeft);
         });
 
         return () => {
@@ -276,7 +274,7 @@ const GameRoom = () => {
                             }
                         }}
                         placeholder={`Enter a location starting with "${currentLetter}"`}
-                        disabled={currentTurn?.id !== socket?.id} // Disable input if not user's turn
+                        disabled={(currentTurn?.id !== socket?.id) || (!isStarted)} // Disable input if not user's turn
                     />
                 </div>
                 
