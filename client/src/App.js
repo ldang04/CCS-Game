@@ -6,6 +6,7 @@ import "./App.css";
 // component imports 
 import NewGame from './components/states/NewGame';
 import GameRoom from './components/states/GameRoom';
+import EndScreen from "./components/states/EndScreen";
 
 const App = () => {
     //  game states
@@ -16,6 +17,7 @@ const App = () => {
             <Routes>
                 <Route path="/" element={<NewGame />} />
                 <Route path="/game/:gameId" element={<GameRoom />} />
+                <Route path="/endScreen" element={<EndScreen />} />
             </Routes>
         </Router>
     );

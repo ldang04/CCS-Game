@@ -113,8 +113,16 @@ const GameRoom = () => {
             alert(message);
         });
 
-        socket.on("end-game", () => {
-            alert("Game has ended.");
+        socket.on("end-game", ({ reason, winner, totalLocations, isSolo }) => {
+            // navigate to the endScreen with appropriate payloads to display.
+            navigate("/endScreen", { 
+                state: { 
+                    reason, 
+                    winner, 
+                    totalLocations, 
+                    isSolo 
+                } 
+            });
         });
 
         return () => {
@@ -122,8 +130,11 @@ const GameRoom = () => {
             socket.off("add-marker"); 
             socket.off("location-error");
             socket.off("game-started");
+            socket.off("update-timeLeft");
+            socket.off("timer-notification");
+            socket.off("end-game");
         };
-    }, [socket]);
+    }, [socket, navigate]);
 
     useEffect(() => {
         // Prompt for nickname only once
