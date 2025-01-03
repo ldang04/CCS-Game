@@ -109,8 +109,8 @@ const GameRoom = () => {
         });
 
         // Listen and update the timer.
-        socket.on("update-timer", (newTimeLeft) => {
-            setTimeLeft(newTimeLeft);
+        socket.on("update-timer", (newTimer) => {
+            setTimer(newTimer);
         });
 
         // Listen for timer notifications
@@ -171,9 +171,8 @@ const GameRoom = () => {
             setCurrentLetter(newLetter);
         });
 
-        socket.on("update-turn", ({ user, timeLeft }) => {
+        socket.on("update-turn", ({ user }) => {
             setCurrentTurn(user);
-            setTimeLeft(timeLeft);
         });
 
         return () => {

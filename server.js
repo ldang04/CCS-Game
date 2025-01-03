@@ -83,7 +83,10 @@ io.on("connection", (socket) => {
         });
     
         io.to(gameId).emit("update-users", room.users);
-        io.to(gameId).emit("update-turn", room.users[room.currentTurnIndex]);
+        io.to(gameId).emit("update-turn", {
+            user: room.users[room.currentTurnIndex],
+            timeLeft: room.timeLeft,
+        });
         console.log(`User ${nickname} joined room ${gameId}`);
     });
     
@@ -169,7 +172,7 @@ io.on("connection", (socket) => {
                     io.to(gameId).emit("end-game", { reason: "Last player standing" });
                     return;
                 } else if (room.isSolo && (currentTurnUser.lives === 0)){
-                    io.to(gameId).emit("end-game", { reason: "Last player standing" });
+                    io.to(gameId).emit("end-game", { reason: "Solo Timeout" });
                     return; 
                 }
     
@@ -191,7 +194,10 @@ io.on("connection", (socket) => {
     
         room.timeLeft = room.timeLimit; // Reset the time for the next turn
         
-        io.to(gameId).emit("update-timer", room.timeLeft);
+        io.to(gameId).emit("update-timer", room.timer);
+        
+        // Just in case, reset time again
+        room.timeLeft = room.timeLimit;
     
         // Notify all clients
         io.to(gameId).emit("update-turn", {
@@ -224,12 +230,19 @@ io.on("connection", (socket) => {
             io.to(gameId).emit("update-current-letter", lastLetter); // Emit only on success
     
             // Advance to the next turn
-            room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
-            const nextTurnUser = room.users[room.currentTurnIndex];
+            let nextTurnUser;
+            do {
+                room.currentTurnIndex = (room.currentTurnIndex + 1) % room.users.length;
+                nextTurnUser = room.users[room.currentTurnIndex];
+            } while (nextTurnUser.lives <= 0); // Skip users with no lives
+
     
             // Broadcast the updated locations list and next turn
             io.to(gameId).emit("update-locations", room.locations);
-            io.to(gameId).emit("update-turn", nextTurnUser, room.timeLeft);
+            io.to(gameId).emit("update-turn", {
+                user: nextTurnUser,
+                timeLeft: room.timeLeft,
+            });
 
             // Reset timer
             startTurnTimer(gameId);
@@ -306,7 +319,10 @@ io.on("connection", (socket) => {
                 io.to(gameId).emit("update-users", room.users);
                 if (room.users.length > 0) {
                     const nextTurnUser = room.users[room.currentTurnIndex];
-                    io.to(gameId).emit("update-turn", nextTurnUser);
+                    io.to(gameId).emit("update-turn", {
+                        user: nextTurnUser,
+                        timeLeft: room.timeLeft,
+                    });
                 }
             }
         }
