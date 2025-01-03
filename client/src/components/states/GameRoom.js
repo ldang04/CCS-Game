@@ -28,7 +28,6 @@ const GameRoom = () => {
     const [markers, setMarkers] = useState([]); // Track Map markers
     const [timeLimit, setTimeLimit] = useState(null); // Initially null, to be set by server
     const [timeLeft, setTimeLeft] = useState(null); // Initially null, to be set by server
-    const [timer, setTimer] = useState(null); // Timer reference
     const [isStarted, setIsStarted] = useState(false); 
 
     const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
@@ -71,9 +70,7 @@ const GameRoom = () => {
             setCurrentLetter(currentLetter);
             setUsers(users);
             setCurrentTurn(currentTurn);
-            setTimeLimit(timeLimit); // Set timeLimit from server
             setTimeLeft(timeLeft); // Set timeLeft from server
-            setTimer(timer);
         });
     
         // Listen for any new markers, and update the Map component using the incoming markers. 
@@ -104,13 +101,11 @@ const GameRoom = () => {
             setCurrentTurn(currentTurn);
             setTimeLimit(timeLimit);
             setTimeLeft(timeLeft);
-            setTimer(timer);
             setIsSolo(isSolo); // Solo / multi can only be determined after game starts
         });
 
-        // Listen and update the timer.
-        socket.on("update-timer", (newTimer) => {
-            setTimer(newTimer);
+        socket.on("update-timeLeft", (timeLeft) => {
+            setTimeLeft(timeLeft);
         });
 
         // Listen for timer notifications
@@ -171,8 +166,12 @@ const GameRoom = () => {
             setCurrentLetter(newLetter);
         });
 
-        socket.on("update-turn", ({ user }) => {
+        socket.on("update-turn", (user) => {
             setCurrentTurn(user);
+        });
+
+        socket.on("update-timeLeft", (updatedTimeLeft) => {
+            setTimeLeft(updatedTimeLeft);
         });
 
         return () => {
