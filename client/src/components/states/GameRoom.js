@@ -125,6 +125,26 @@ const GameRoom = () => {
             });
         });
 
+        socket.on("update-locations", (updatedLocations) => {
+            setLocations(updatedLocations);
+        });
+
+        socket.on("update-users", (updatedUsers) => {
+            setUsers(updatedUsers);
+        });
+
+        socket.on("update-current-letter", (newLetter) => {
+            setCurrentLetter(newLetter);
+        });
+
+        socket.on("update-turn", (user) => {
+            setCurrentTurn(user);
+        });
+
+        socket.on("update-timeLeft", (updatedTimeLeft) => {
+            setTimeLeft(updatedTimeLeft);
+        });
+
         return () => {
             socket.off("initialize-game");
             socket.off("add-marker"); 
@@ -133,6 +153,11 @@ const GameRoom = () => {
             socket.off("update-timeLeft");
             socket.off("timer-notification");
             socket.off("end-game");
+            socket.off("update-locations");
+            socket.off("update-users");
+            socket.off("update-current-letter");
+            socket.off("update-turn");
+            socket.off("update-timeLeft");
         };
     }, [socket, navigate]);
 
@@ -163,27 +188,6 @@ const GameRoom = () => {
         });
 
         setIsJoined(true);
-
-        // Listen for updates
-        socket.on("update-locations", (updatedLocations) => {
-            setLocations(updatedLocations);
-        });
-
-        socket.on("update-users", (updatedUsers) => {
-            setUsers(updatedUsers);
-        });
-
-        socket.on("update-current-letter", (newLetter) => {
-            setCurrentLetter(newLetter);
-        });
-
-        socket.on("update-turn", (user) => {
-            setCurrentTurn(user);
-        });
-
-        socket.on("update-timeLeft", (updatedTimeLeft) => {
-            setTimeLeft(updatedTimeLeft);
-        });
 
         return () => {
             socket.disconnect();
