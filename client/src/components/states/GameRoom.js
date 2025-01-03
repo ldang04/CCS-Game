@@ -13,6 +13,7 @@ import Lives from "../helpers/Lives";
 const GameRoom = () => {
     const { gameId } = useParams();
     const { state } = useLocation();
+    const [audio] = useState(new Audio("/assets/time-passing.mp3")); 
 
     // State and Refs
     const [nickname, setNickname] = useState(""); 
@@ -30,6 +31,7 @@ const GameRoom = () => {
     const [timeLimit, setTimeLimit] = useState(null); // Initially null, to be set by server
     const [timeLeft, setTimeLeft] = useState(null); // Initially null, to be set by server
     const [isStarted, setIsStarted] = useState(false); 
+    const [isFlashing, setIsFlashing] = useState(false); 
 
     const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
     const livesRef = useRef(state?.lives || 3); 
@@ -139,7 +141,8 @@ const GameRoom = () => {
         socket.on("disconnected", () => {
             navigate("/"); 
             Swal.fire(getAlertBody("You disonnected", "error")); 
-        })
+        }); 
+
         });
 
         socket.on("update-locations", (updatedLocations) => {
@@ -178,6 +181,27 @@ const GameRoom = () => {
         };
     }, [socket, navigate]);
 
+    // handle flashing red on timer countdown 
+   
+    useEffect(() => {
+        if (timeLeft <= 5 && timeLeft > 0) {
+            // Play sound in the last 5 seconds
+            audio.loop = true;
+            audio.play().catch((error) => console.error("Audio play error:", error));
+        } else {
+            // Stop sound when timer is no longer in the last 5 seconds
+            audio.pause();
+            audio.currentTime = 0;
+        }
+
+        return () => {
+            // Cleanup: Ensure sound stops when component unmounts
+            audio.pause();
+            audio.currentTime = 0;
+        };
+    }, [timeLeft, audio]);
+
+
     useEffect(() => {
         // Prompt for nickname only once
         if (!nicknameRef.current.trim()) {
@@ -195,7 +219,7 @@ const GameRoom = () => {
 
         const socket = io("http://localhost:3001"); // Connect to WebSocket server
         setSocket(socket);
-
+        
         // Join specific room
         socket.emit("join-room", { 
             gameId, 
@@ -228,7 +252,7 @@ const GameRoom = () => {
     };
 
     return (
-        <div className="game-wrapper-container">
+        <div className={`game-wrapper-container`}>
             <Header />
 
             {!isJoined ? (
@@ -260,6 +284,7 @@ const GameRoom = () => {
                         </div>
 
                         <Map markers={markers} /> {/* Pass markers to Map */}
+
                         <div className="places-list-container hide">
                             <p className="li-header">Previous:</p>
                             
@@ -278,7 +303,7 @@ const GameRoom = () => {
                         </button>
                     ) : (
                         <>
-                            <p className="current-p">
+                            <p className={`current-p ${isFlashing ? "flash-red" : ""}`}>
                                 Current letter: {currentLetter},{" "}
                                 {currentTurn?.id === socket?.id ? "Your turn" : `${currentTurn?.name}'s turn`}
                             </p>

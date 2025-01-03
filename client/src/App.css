@@ -42,6 +42,10 @@ body {
     border-radius: 0.5em;
 }
 
+.swal-custom-popup h2 {
+    font-size: 1.5em;
+}
+
 .swal-custom-popup button {
     margin: 0.5em;
     border-radius: 10em;
@@ -133,6 +137,36 @@ input::target-text {
 }
 
 /* PLAYING STATE ==================================================================== */
+.flash-red {
+    animation: flash 0.5s infinite alternate;
+    color: red !important; 
+}
+
+@keyframes flash {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0.5;
+    }
+}
+
+@keyframes pop {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.5);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0;
+    }
+}
+
+.heart-pop {
+    animation: pop 0.5s ease-in-out forwards;
+}
 
 .mid-container {
     display: flex; /* Enable Flexbox */
@@ -292,7 +326,32 @@ input::target-text {
     display: none;
 }
 
-/* RESPONSIVE BREAKPOINT:  */
+/* END SCREEN ======================================================================================================================== */
+
+.end-screen-container {
+    width: 50vw; 
+    color: white;
+    font-weight: 600;
+}
+
+.end-screen-container .map-container {
+    background: red;
+    height: 50vh;
+}
+
+.end-screen-container p {
+    font-size: 1.25em;
+    margin: 0.5em 0 0.5em 0;
+}
+
+.end-screen-container h1 {
+    -webkit-text-stroke: 2px black; /* Black border */
+    -webkit-text-fill-color: red; /* Fill the text with yellow */
+    text-shadow: 0px 4px 8px rgba(0, 0, 0, 0.4); /* Optional depth shadow */
+    display: inline-block;
+}
+
+/* RESPONSIVE BREAKPOINT: ======================================================================================================================== */
 @media (min-width: 0px) and (max-width: 768px) {
 
     .hide {
@@ -406,5 +465,9 @@ input::target-text {
 
     .input-container {
         width: 90vw;
+    }
+
+    .end-screen-container {
+        width: 80vw;
     }
 }

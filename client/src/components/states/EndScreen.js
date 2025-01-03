@@ -16,7 +16,8 @@ const EndScreen = () => {
     return (
         <div className="end-screen-container">
             <h1>Game Over!</h1>
-            <p>{reason}</p>
+            {/* <p>{reason}</p> <-- Dev note: personally don't think this is too important*/}
+            
             <Map markers={markers} customZoom={0} /> {/* Pass markers to Map */}
 
             {/* Display winner if it's a multiplayer game */}
