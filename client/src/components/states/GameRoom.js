@@ -120,7 +120,8 @@ const GameRoom = () => {
                     reason, 
                     winner, 
                     totalLocations, 
-                    isSolo 
+                    isSolo,
+                    markers // list of map markers
                 } 
             });
         });
