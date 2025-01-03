@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import Swal from "sweetalert2";
 
 import "../../App.css";
 
@@ -55,6 +56,21 @@ const GameRoom = () => {
         }
     };
 
+    const getAlertBody = (title, icon) => {
+        return (
+            {
+                title,
+                icon,
+                customClass: {
+                    popup: 'swal-custom-popup',
+                },
+                confirmButtonText: 'OK',
+                heightAuto: false, 
+                position: "top"
+            }
+        )
+    }
+
     useEffect(() => {
         console.log(state);
     }, [])
@@ -82,7 +98,7 @@ const GameRoom = () => {
         });
 
         socket.on("location-error", (message) => {
-            alert(message); // Show the error message
+            Swal.fire(getAlertBody(message, "warning")); 
         });
 
         socket.on("update-users", (updatedUsers) => {
@@ -90,7 +106,7 @@ const GameRoom = () => {
         });
 
         socket.on("game-started-error",() => {
-            alert("Game is already in session."); 
+            Swal.fire(getAlertBody("Game is already in session.", "warning"));
             navigate('/'); 
         })
 
@@ -108,11 +124,6 @@ const GameRoom = () => {
             setTimeLeft(timeLeft);
         });
 
-        // Listen for timer notifications
-        socket.on("timer-notification", (message) => {
-            alert(message);
-        });
-
         socket.on("end-game", ({ reason, winner, totalLocations, isSolo }) => {
             // navigate to the endScreen with appropriate payloads to display.
             navigate("/endScreen", { 
@@ -124,6 +135,11 @@ const GameRoom = () => {
                     markers // list of map markers
                 } 
             });
+
+        socket.on("disconnected", () => {
+            navigate("/"); 
+            Swal.fire(getAlertBody("You disonnected", "error")); 
+        })
         });
 
         socket.on("update-locations", (updatedLocations) => {
@@ -199,8 +215,9 @@ const GameRoom = () => {
         if (!input.trim()) return;
     
         if (input[0].toUpperCase() !== currentLetter) {
-            alert(`Your answer must start with the letter "${currentLetter}"`);
-            return;
+            Swal.fire(getAlertBody(`Your answer must start with the letter "${currentLetter}"`, "warning")); 
+
+            return false;
         }
     
         // Emit the new location to the server
@@ -209,14 +226,6 @@ const GameRoom = () => {
         // Clear the input field immediately
         setInput("");
     };
-
-    // Need to first get the current user's life, then update it at TimeOut. 
-    // currentTurn is only a reference to the object of the current user. 
-    const getCurrentUser = () => {
-        const currentUserId = socket.id;
-        return users.find(user => user.id === currentUserId);
-    };
-
 
     return (
         <div className="game-wrapper-container">
@@ -284,6 +293,7 @@ const GameRoom = () => {
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => {
                             if(e.key === "Enter"){
+                                e.preventDefault();
                                 handleLocationEnter()
                             }
                         }}

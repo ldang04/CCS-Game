@@ -23,6 +23,7 @@
 
 body {
     padding: 2em;
+    overflow: auto !important; 
     display: flex;
     height: 100vh; 
     justify-content: center;
@@ -32,6 +33,23 @@ body {
     background: radial-gradient(circle, transparent 20%, #0c74f5 20%, #0c74f5 80%, transparent 80%, transparent), radial-gradient(circle, transparent 20%, #0c74f5 20%, #0c74f5 80%, transparent 80%, transparent) 22.5px 22.5px, linear-gradient(#0044ff 1.8px, transparent 1.8px) 0 -0.9px, linear-gradient(90deg, #0044ff 1.8px, #0c74f5 1.8px) -0.9px 0;
     background-size: 45px 45px, 45px 45px, 22.5px 22.5px, 22.5px 22.5px;
   }
+
+.swal-custom-popup {
+    margin: auto !important; /* Ensure proper alignment */
+    transform: none !important; /* Prevent unwanted shifting */
+    top: auto !important; /* Avoid shifting to the top */
+    font-family: "Fredoka";
+    border-radius: 0.5em;
+}
+
+.swal-custom-popup button {
+    margin: 0.5em;
+    border-radius: 10em;
+    background: #0c74f5;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1em;
+}
 
 h1 {
     font-family: "Fredoka";

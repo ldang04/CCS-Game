@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+import Swal from 'sweetalert2';
 import '../../App.css'; 
 
 import Header from "../helpers/Header";
@@ -18,7 +19,7 @@ const NewGame = () => {
 
     const handleJoin = async () => {
         if (!nickname.trim()) {
-            alert("Enter a nickname");
+            Swal.fire(getAlertBody("Enter a nickname", "warning"));
             return;
         }
      
@@ -35,11 +36,11 @@ const NewGame = () => {
                     // Navigate to the GameRoom with the nickname
                     navigate(`/game/${input}`, { state: { nickname } });
                 } else {
-                    alert("Room does not exist. Please try again.");
+                    Swal.fire(getAlertBody("Room does not exist. Please try again.", "question")); 
                 }
             } catch (error) {
                 console.error("Error checking room:", error);
-                alert("An error occurred while checking the room. Please try again.");
+                Swal.fire(getAlertBody("An error occurred while checking the room. Please try again.", "error"));
             }
         } else {
             // Create a new game
@@ -53,7 +54,7 @@ const NewGame = () => {
                 navigate(`/game/${gameId}`, { state: { nickname, timeLimit: time, lives } });
             } catch (error) {
                 console.error("Error creating game:", error);
-                alert("An error occurred while creating the game. Please try again.");
+                Swal.fire(getAlertBody("An error occurred while creating the game", "error")); 
             }
         }
     };
@@ -66,6 +67,21 @@ const NewGame = () => {
     const handleLivesChange = (e) => {
         const newValue = parseInt(e.target.value, 10);
         setLives(Number.isNaN(newValue) ? 0 : newValue);
+    }
+
+    const getAlertBody = (title, icon) => {
+        return (
+            {
+                title,
+                icon,
+                customClass: {
+                    popup: 'swal-custom-popup',
+                },
+                confirmButtonText: 'OK',
+                heightAuto: false, 
+                position: "top"
+            }
+        )
     }
 
     return (
