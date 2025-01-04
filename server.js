@@ -141,6 +141,40 @@ io.on("connection", (socket) => {
         console.log(`Game started in room ${gameId}`);
     });
 
+    const checkEnd = (gameId) => {
+        const room = gameRooms[gameId];
+        if (!room) return;
+
+        // Check if only one player is left in a multiplayer game
+        const remainingPlayers = room.users.filter(user => user.lives > 0);
+        if (remainingPlayers.length === 1 && !room.isSolo) {
+            const winner = remainingPlayers[0];
+            io.to(gameId).emit("end-game", { 
+                reason: "Last player standing", 
+                winner: winner.name, 
+                totalLocations: room.locations.length,
+                isSolo: room.isSolo 
+            });
+            return;
+        } else if (room.isSolo && room.users.length === 0) {
+            io.to(gameId).emit("end-game", { 
+                reason: "Solo timeout", 
+                totalLocations: room.locations.length,
+                isSolo: room.isSolo 
+            });
+            return;
+        } else if (!room.isSolo && room.users.length === 1) {
+            const winner = room.users[0]; // The remaining player is the winner
+            io.to(gameId).emit("end-game", { 
+                reason: "Players have disconnected in multiplayer game", 
+                winner: winner.name, 
+                totalLocations: room.locations.length,
+                isSolo: room.isSolo 
+            });
+            return;
+        }
+    }
+
     const startTurnTimer = (gameId) => {
         const room = gameRooms[gameId];
         if (!room) return;
@@ -166,32 +200,7 @@ io.on("connection", (socket) => {
                     io.to(gameId).emit("update-users", room.users);
                 }
     
-                const remainingPlayers = room.users.filter(user => user.lives > 0);
-                if (remainingPlayers.length === 1 && !(room.isSolo)) {
-                    const winner = remainingPlayers[0];
-                    io.to(gameId).emit("end-game", { 
-                        reason: "Last player standing", 
-                        winner: winner.name, 
-                        totalLocations: room.locations.length,
-                        isSolo: room.isSolo 
-                    });
-                    return;
-                } else if (room.isSolo && (currentTurnUser.lives === 0)){
-                    io.to(gameId).emit("end-game", { 
-                        reason: "Solo timeout", 
-                        totalLocations: room.locations.length,
-                        isSolo: room.isSolo 
-                    });
-                    return; 
-                } else if (!(room.isSolo) && (room.users.length === 1)) { 
-                    const winner = room.users[0]; // The remaining player is the winner
-                    io.to(gameId).emit("end-game", { 
-                        reason: "Players have disconnected in multiplayer game", 
-                        winner: winner.name, 
-                        totalLocations: room.locations.length,
-                        isSolo: room.isSolo 
-                    }); 
-                }
+                checkEnd(gameId);
     
                 passTurn(gameId);
             }
@@ -314,8 +323,15 @@ io.on("connection", (socket) => {
                 if (room.users.length > 0) {
                     const nextTurnUser = room.users[room.currentTurnIndex];
                     io.to(gameId).emit("update-turn", nextTurnUser);
+                    room.timeLeft = room.timeLimit;
                     io.to(gameId).emit("update-timeLeft", room.timeLeft);
+                } else {
+                    clearInterval(room.timer); 
                 }
+                
+                // At a disconnect, we need to check for the last end condition:
+                //  mulitplayer game and all but one user disconnects 
+                checkEnd(gameId);
             }
         }
     });
