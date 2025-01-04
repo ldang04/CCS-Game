@@ -132,7 +132,7 @@ const GameRoom = () => {
             navigate("/endScreen", { 
                 state: { 
                     reason, 
-                    winner: winner || "solo", // Handle cases where winner is undefined
+                    winner, 
                     totalLocations, 
                     isSolo,
                     markers // list of map markers

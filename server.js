@@ -160,7 +160,7 @@ io.on("connection", (socket) => {
         } else if (room.isSolo && room.users.length === 0) {
             io.to(gameId).emit("end-game", { 
                 reason: "Solo timeout", 
-                winner: null, // No winner in solo game
+                winner: "SOLO", // No winner in solo game
                 totalLocations: room.locations.length,
                 isSolo: room.isSolo 
             });
@@ -170,7 +170,7 @@ io.on("connection", (socket) => {
             console.log(`Solo game ended: Player lost all lives`);
             io.to(gameId).emit("end-game", { 
                 reason: "You lost all lives", 
-                winner: null, // No winner in solo game
+                winner: "SOLO", // No winner in solo game
                 totalLocations: room.locations.length,
                 isSolo: room.isSolo 
             });
