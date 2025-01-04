@@ -149,6 +149,7 @@ io.on("connection", (socket) => {
         const remainingPlayers = room.users.filter(user => user.lives > 0);
         if (remainingPlayers.length === 1 && !room.isSolo) {
             const winner = remainingPlayers[0];
+            console.log(`Multi game end`);
             io.to(gameId).emit("end-game", { 
                 reason: "Last player standing", 
                 winner: winner.name, 
@@ -159,12 +160,25 @@ io.on("connection", (socket) => {
         } else if (room.isSolo && room.users.length === 0) {
             io.to(gameId).emit("end-game", { 
                 reason: "Solo timeout", 
+                winner: null, // No winner in solo game
                 totalLocations: room.locations.length,
                 isSolo: room.isSolo 
             });
             return;
-        } else if (!room.isSolo && room.users.length === 1) {
+        } else if (room.isSolo && room.users[0].lives <= 0) {
+            // Solo game ends when the player loses all lives
+            console.log(`Solo game ended: Player lost all lives`);
+            io.to(gameId).emit("end-game", { 
+                reason: "You lost all lives", 
+                winner: null, // No winner in solo game
+                totalLocations: room.locations.length,
+                isSolo: room.isSolo 
+            });
+            return;
+        } 
+        else if (!room.isSolo && room.users.length === 1) {
             const winner = room.users[0]; // The remaining player is the winner
+            console.log(`Multi game default win`);
             io.to(gameId).emit("end-game", { 
                 reason: "Players have disconnected in multiplayer game", 
                 winner: winner.name, 
@@ -299,6 +313,7 @@ io.on("connection", (socket) => {
             // Emit the updated users list to all clients in the room
             io.to(gameId).emit("update-users", room.users);
         }
+        checkEnd(gameId);
     });
 
     // Handle user disconnecting

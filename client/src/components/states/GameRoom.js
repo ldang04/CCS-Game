@@ -128,20 +128,21 @@ const GameRoom = () => {
 
         socket.on("end-game", ({ reason, winner, totalLocations, isSolo }) => {
             // navigate to the endScreen with appropriate payloads to display.
+            console.log("Received end-game event:", { reason, winner, totalLocations, isSolo });
             navigate("/endScreen", { 
                 state: { 
                     reason, 
-                    winner, 
+                    winner: winner || "solo", // Handle cases where winner is undefined
                     totalLocations, 
                     isSolo,
                     markers // list of map markers
                 } 
             });
 
-        socket.on("disconnected", () => {
-            navigate("/"); 
-            Swal.fire(getAlertBody("You disonnected", "error")); 
-        }); 
+            socket.on("disconnected", () => {
+                navigate("/"); 
+                Swal.fire(getAlertBody("You disonnected", "error")); 
+            }); 
 
         });
 
@@ -170,7 +171,6 @@ const GameRoom = () => {
             socket.off("add-marker"); 
             socket.off("location-error");
             socket.off("game-started");
-            socket.off("update-timeLeft");
             socket.off("timer-notification");
             socket.off("end-game");
             socket.off("update-locations");
