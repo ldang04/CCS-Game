@@ -138,14 +138,13 @@ const GameRoom = () => {
                     markers // list of map markers
                 } 
             });
-
-            socket.on("disconnected", () => {
-                navigate("/"); 
-                Swal.fire(getAlertBody("You disonnected", "error")); 
-            }); 
-
         });
 
+        socket.on("disconnect", () => {
+            navigate("/"); 
+            Swal.fire(getAlertBody("You disconnected", "error")); 
+        }); 
+        
         socket.on("update-locations", (updatedLocations) => {
             console.log("UPDATE LOCATIONS"); 
             setLocations(updatedLocations);
@@ -183,6 +182,7 @@ const GameRoom = () => {
             socket.off("update-current-letter");
             socket.off("update-turn");
             socket.off("update-timeLeft");
+            socket.off("disconnected");
         };
     }, [socket, navigate]);
 

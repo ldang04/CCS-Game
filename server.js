@@ -170,6 +170,8 @@ io.on("connection", (socket) => {
             console.log("solo death hit"); 
             // Solo game ends when the player loses all lives
             console.log(`Solo game ended: Player lost all lives`);
+            console.log(`Emitting to room ${gameId} with users:`, room.users);
+
             io.to(gameId).emit("end-game", { 
                 reason: "You lost all lives", 
                 winner: "SOLO", // No winner in solo game
