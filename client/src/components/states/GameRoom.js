@@ -82,6 +82,7 @@ const GameRoom = () => {
     
         // Handle initialization for a new user
         socket.on("initialize-game", ({ locations, markers, currentLetter, users, currentTurn, timeLimit, timeLeft, timer}) => {
+            console.log("GAME INITIALIZED")
             console.log("Initializing game with data:", { locations, markers, currentLetter, users, currentTurn, timeLimit });
             setLocations(locations);
             setMarkers(markers);
@@ -104,26 +105,25 @@ const GameRoom = () => {
         });
 
         socket.on("update-users", (updatedUsers) => {
+            console.log("USERS UPDATED"); 
             setUsers(updatedUsers);
         });
 
         socket.on("game-started-error",() => {
+            console.log("game started error"); 
             Swal.fire(getAlertBody("Game is already in session.", "warning"));
             navigate('/'); 
         })
 
         // Handle initialization for a new user
         socket.on("game-started", ({ currentLetter, currentTurn, timeLimit, timeLeft, timer, users, locations, isSolo}) => {
+            console.log("GAME STARTED"); 
             setIsStarted(true);
             setCurrentLetter(currentLetter);
             setCurrentTurn(currentTurn);
             setTimeLimit(timeLimit);
             setTimeLeft(timeLeft);
             setIsSolo(isSolo); // Solo / multi can only be determined after game starts
-        });
-
-        socket.on("update-timeLeft", (timeLeft) => {
-            setTimeLeft(timeLeft);
         });
 
         socket.on("end-game", ({ reason, winner, totalLocations, isSolo }) => {
@@ -147,22 +147,27 @@ const GameRoom = () => {
         });
 
         socket.on("update-locations", (updatedLocations) => {
+            console.log("UPDATE LOCATIONS"); 
             setLocations(updatedLocations);
         });
 
         socket.on("update-users", (updatedUsers) => {
+            console.log("UPDATE USERS"); 
             setUsers(updatedUsers);
         });
 
         socket.on("update-current-letter", (newLetter) => {
+            console.log("UPDATE CURRENT LETTER"); 
             setCurrentLetter(newLetter);
         });
 
         socket.on("update-turn", (user) => {
+            console.log("UPDATE TURN"); 
             setCurrentTurn(user);
         });
 
         socket.on("update-timeLeft", (updatedTimeLeft) => {
+            console.log("time hit"); 
             setTimeLeft(updatedTimeLeft);
         });
 
@@ -204,7 +209,7 @@ const GameRoom = () => {
 
     useEffect(() => {
         // Prompt for nickname only once
-        if (!nicknameRef.current.trim()) {
+        while (!nicknameRef.current.trim()) {
             let userNickname = "";
             do {
                 userNickname = prompt("Please enter your nickname:").trim();

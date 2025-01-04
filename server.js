@@ -158,6 +158,7 @@ io.on("connection", (socket) => {
             });
             return;
         } else if (room.isSolo && room.users.length === 0) {
+            console.log("solo timeout hit"); 
             io.to(gameId).emit("end-game", { 
                 reason: "Solo timeout", 
                 winner: "SOLO", // No winner in solo game
@@ -166,6 +167,7 @@ io.on("connection", (socket) => {
             });
             return;
         } else if (room.isSolo && room.users[0].lives <= 0) {
+            console.log("solo death hit"); 
             // Solo game ends when the player loses all lives
             console.log(`Solo game ended: Player lost all lives`);
             io.to(gameId).emit("end-game", { 
