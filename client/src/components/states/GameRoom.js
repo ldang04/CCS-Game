@@ -32,6 +32,8 @@ const GameRoom = () => {
     const [timeLeft, setTimeLeft] = useState(null); // Initially null, to be set by server
     const [isStarted, setIsStarted] = useState(false); 
     const [isFlashing, setIsFlashing] = useState(false); 
+    const [isGameEnded, setIsGameEnded] = useState(false);
+
 
     const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
     const livesRef = useRef(state?.lives || 3); 
@@ -127,8 +129,10 @@ const GameRoom = () => {
         });
 
         socket.on("end-game", ({ reason, winner, totalLocations, isSolo }) => {
+            setIsGameEnded(true);
+            console.log("ENDING GAME");
             // navigate to the endScreen with appropriate payloads to display.
-            console.log("Received end-game event:", { reason, winner, totalLocations, isSolo });
+            console.log("End-game event received:", { reason, winner, totalLocations, isSolo });
             navigate("/endScreen", { 
                 state: { 
                     reason, 
@@ -141,6 +145,9 @@ const GameRoom = () => {
         });
 
         socket.on("disconnect", () => {
+            if (isGameEnded) return; // Do not navigate if game has ended
+            let timestamp = new Date().toISOString(); // Get current time in ISO format
+            console.log(`[${timestamp}] DISCONNECTED`);
             navigate("/"); 
             Swal.fire(getAlertBody("You disconnected", "error")); 
         }); 
@@ -176,20 +183,20 @@ const GameRoom = () => {
             socket.off("location-error");
             socket.off("game-started");
             socket.off("timer-notification");
-            socket.off("end-game");
             socket.off("update-locations");
             socket.off("update-users");
             socket.off("update-current-letter");
             socket.off("update-turn");
             socket.off("update-timeLeft");
-            socket.off("disconnected");
+            socket.off("end-game");
+            socket.off("disconnect");
         };
     }, [socket, navigate]);
 
     // handle flashing red on timer countdown 
    
     useEffect(() => {
-        if (timeLeft <= 5 && timeLeft > 0) {
+        if (timeLeft <= 5 && timeLeft > 0 && isStarted) {
             // Play sound in the last 5 seconds
             audio.loop = true;
             audio.play().catch((error) => console.error("Audio play error:", error));
@@ -236,6 +243,8 @@ const GameRoom = () => {
         setIsJoined(true);
 
         return () => {
+            let timestamp = new Date().toISOString(); // Get current time in ISO format
+            console.log(`[${timestamp}] DISCONNECTING`);
             socket.disconnect();
         };
     }, [gameId]);

@@ -167,9 +167,10 @@ io.on("connection", (socket) => {
             });
             return;
         } else if (room.isSolo && room.users[0].lives <= 0) {
-            console.log("solo death hit"); 
             // Solo game ends when the player loses all lives
-            console.log(`Solo game ended: Player lost all lives`);
+            let timestamp = new Date().toISOString();
+            console.log(`[${timestamp}] ENDING GAME`);
+            console.log("Checking solo end condition:", room.isSolo, room.users[0].lives);
             console.log(`Emitting to room ${gameId} with users:`, room.users);
 
             io.to(gameId).emit("end-game", { 
@@ -352,10 +353,9 @@ io.on("connection", (socket) => {
                 //  mulitplayer game and all but one user disconnects 
                 checkEnd(gameId);
             }
-        }
+        } 
     });
 
-    socket.emit("disconnected"); 
 });
 
 // Location hashmap. ==============================================================================================================
