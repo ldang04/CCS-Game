@@ -379,9 +379,12 @@ io.on("connection", (socket) => {
                     clearInterval(room.timer); 
                 }
                 
-                // At a disconnect, we need to check for the last end condition:
-                //  mulitplayer game and all but one user disconnects 
-                checkEnd(gameId);
+                // At a disconnect, we need to check for the last end condition: Mulitplayer game and all but one user disconnects 
+                // Can't check for solo game here, as if solo game ends, disconnect will fire and the socket disconnects. 
+                // This causes the game room to be empty, throwing a null pointer exception checking for end conditions. 
+                if (!room.isSolo) {
+                    checkEnd(gameId);
+                }
             }
         } 
     });
