@@ -157,15 +157,6 @@ io.on("connection", (socket) => {
                 isSolo: room.isSolo 
             });
             return;
-        } else if (room.isSolo && room.users.length === 0) {
-            console.log("solo timeout hit"); 
-            io.to(gameId).emit("end-game", { 
-                reason: "Solo timeout", 
-                winner: "SOLO", // No winner in solo game
-                totalLocations: room.locations.length,
-                isSolo: room.isSolo 
-            });
-            return;
         } else if (room.isSolo && room.users[0].lives <= 0) {
             // Solo game ends when the player loses all lives
             let timestamp = new Date().toISOString();
@@ -218,8 +209,47 @@ io.on("connection", (socket) => {
                     currentTurnUser.lives -= 1;
                     io.to(gameId).emit("update-users", room.users);
                 }
-    
-                checkEnd(gameId);
+                
+                // EXPLICIT END GAME CHECK in place of checkEnd():
+                // Might have introduced race conditions that could've caused other emissions to fire before end-game.
+                // Specifically, this would prevent the end-game sequence during a solo game. 
+                const remainingPlayers = room.users.filter(user => user.lives > 0);
+                if (remainingPlayers.length === 1 && !room.isSolo) {
+                    const winner = remainingPlayers[0];
+                    console.log(`Multi game end`);
+                    io.to(gameId).emit("end-game", { 
+                        reason: "Last player standing", 
+                        winner: winner.name, 
+                        totalLocations: room.locations.length,
+                        isSolo: room.isSolo 
+                    });
+                    return;
+                } else if (room.isSolo && room.users[0].lives <= 0) {
+                    // Solo game ends when the player loses all lives
+                    let timestamp = new Date().toISOString();
+                    console.log(`[${timestamp}] ENDING GAME`);
+                    console.log("Checking solo end condition:", room.isSolo, room.users[0].lives);
+                    console.log(`Emitting to room ${gameId} with users:`, room.users);
+
+                    io.to(gameId).emit("end-game", { 
+                        reason: "You lost all lives", 
+                        winner: "SOLO", // No winner in solo game
+                        totalLocations: room.locations.length,
+                        isSolo: room.isSolo 
+                    });
+                    return;
+                } 
+                else if (!room.isSolo && room.users.length === 1) {
+                    const winner = room.users[0]; // The remaining player is the winner
+                    console.log(`Multi game default win`);
+                    io.to(gameId).emit("end-game", { 
+                        reason: "Players have disconnected in multiplayer game", 
+                        winner: winner.name, 
+                        totalLocations: room.locations.length,
+                        isSolo: room.isSolo 
+                    });
+                    return;
+                }
     
                 passTurn(gameId);
             }
