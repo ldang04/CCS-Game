@@ -27,7 +27,7 @@ const NewGame = () => {
             console.log("sldjflsfs");
             try {
                 // Check if the room exists
-                const response = await fetch(`http://localhost:3001/check-room/${input}`);
+                const response = await fetch(`/check-room/${input}`);
                 const data = await response.json();
                 
                 console.log("data");
@@ -46,7 +46,7 @@ const NewGame = () => {
             // Create a new game
             try {
                 // Fetch a new game ID
-                const response = await fetch("http://localhost:3001/create_game");
+                const response = await fetch("/create_game");
                 const data = await response.json();
                 const gameId = data.gameId;
     

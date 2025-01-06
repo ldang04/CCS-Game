@@ -229,7 +229,7 @@ const GameRoom = () => {
     useEffect(() => {
         if (!nicknameRef.current) return; // Ensure nickname is set
 
-        const socket = io("http://localhost:3001"); // Connect to WebSocket server
+        const socket = io(); // Connect to WebSocket server
         setSocket(socket);
         
         // Join specific room
