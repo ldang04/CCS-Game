@@ -16,9 +16,11 @@ app.use(express.urlencoded({ extended: true })); // For parsing application/x-ww
 const path = require('path');
 app.use(express.static(path.join(__dirname, 'client', 'build')));
 
-app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'client', 'build', 'index.html'));
-});
+// Serve React frontend for all other routes
+app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "client", "build", "index.html"));
+  });
+  
 
 // WEB SOCKET CONFIG ===========================================================================================================================
 
