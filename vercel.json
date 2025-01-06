@@ -2,14 +2,15 @@
     "version": 2,
     "builds": [
       {
-        "src": "server/server.js",
+        "src": "server.js",
         "use": "@vercel/node"
       }
     ],
     "routes": [
       {
         "src": "/api/(.*)",
-        "dest": "server/server.js"
+        "dest": "server.js"
       }
-    ]
+    ], 
+    "buildCommand": "npm install && npm install --prefix client && npm run build --prefix client"
   }

@@ -4,11 +4,12 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server/server.js", 
-    "dev": "concurrently \"npm run server\" \"npm run client\"", 
-    "server": "nodemon server/server.js", 
-    "client": "npm start --prefix client" 
-},
+    "start": "node server/server.js",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/server.js",
+    "client": "npm start --prefix client", 
+    "postinstall": "cd ../client && npm install && npm run build"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -22,6 +23,7 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "string-similarity": "^4.0.4",
-    "uuid": "^11.0.3"
+    "uuid": "^11.0.3",
+    "vercel": "^39.2.5"
   }
 }
