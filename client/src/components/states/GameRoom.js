@@ -36,8 +36,6 @@ const GameRoom = () => {
 
 
     const nicknameRef = useRef(state?.nickname || ""); // Use ref to handle immediate nickname logic
-    const livesRef = useRef(state?.lives || 3); 
-    const timeLimitRef = useRef(state?.timeLimit || 60); 
     
     const navigate = useNavigate(); 
 

@@ -11,7 +11,7 @@ const EndScreen = () => {
     const navigate = useNavigate();
 
     // Destructure data passed from GameRoom.js
-    const { reason, winner, totalLocations, isSolo, markers = [] } = location.state || {};
+    const { winner, totalLocations, isSolo, markers = [] } = location.state || {};
 
     return (
         <div className="end-screen-container">
