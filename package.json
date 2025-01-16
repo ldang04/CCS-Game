@@ -1,17 +1,14 @@
 {
-  "name": "ccs_game",
+  "name": "ccs-game",
   "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "nodemon server/server.js",
-    "client": "npm start --prefix client"
+    "start": "cd server && node server.js"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
+  "description": "",
   "dependencies": {
     "concurrently": "^9.1.1",
     "cors": "^2.8.5",
