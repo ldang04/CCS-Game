@@ -14,7 +14,7 @@ app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
 
 const path = require('path');
-app.use(express.static(path.join(__dirname, 'client', 'build', "index.html")));
+app.use(express.static(path.join(__dirname, 'client', 'build')));
 
 // Serve React frontend for all other routes
 app.get("/*", (req, res) => {
