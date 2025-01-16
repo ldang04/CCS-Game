@@ -26,6 +26,10 @@ app.get("/*", (req, res) => {
     });
   });
   
+  // resolve potential favicon errors
+  app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'public', 'favicon.ico'));
+});
 
 // WEB SOCKET CONFIG ===========================================================================================================================
 
