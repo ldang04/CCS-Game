@@ -14,11 +14,11 @@ app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
 
 const path = require('path');
-app.use(express.static(path.join(__dirname, 'client', 'build')));
+app.use(express.static(path.join(__dirname, 'client', 'public')));
 
 // Serve React frontend for all other routes
 app.get("/*", (req, res) => {
-    res.sendFile(path.join(__dirname, "client", "build", "index.html"), 
+    res.sendFile(path.join(__dirname, "client", "public", "index.html"), 
     function(err){
         if(err){
             res.status(500).send(err); 
