@@ -22,7 +22,6 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "string-similarity": "^4.0.4",
-    "uuid": "^11.0.3",
-    "vercel": "^39.2.5"
+    "uuid": "^11.0.3"
   }
 }
