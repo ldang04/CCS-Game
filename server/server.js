@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const stringSimilarity = require("string-similarity");
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
