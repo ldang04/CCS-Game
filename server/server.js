@@ -12,7 +12,7 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
-app.use(express.static(path.join(__dirname, 'client', 'build')));
+app.use(express.static(path.join('client', 'build')));
 
 // Make server serve up the client 
 app.get("/api/*", (req, res) => {
