@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true })); // For parsing application/x-ww
 app.use(express.static(path.join(__dirname, 'client', 'build')));
 
 // Make server serve up the client 
-app.get("/*", (req, res) => {
+app.get("/api/*", (req, res) => {
     res.sendFile(path.join(__dirname, "client", "public", "index.html"), 
     function(err){
         if(err){
@@ -452,17 +452,17 @@ loadLocations(locationsCSVFilePath).then(() => {
 
 
 // API routes ==============================================================================================================
-app.get("/", (req, res) => {
+app.get("/api", (req, res) => {
     res.send("Hello, world!"); 
 });
 
-app.get('/create_game', (req, res) => {
+app.get('/api/create_game', (req, res) => {
     const gameId = uuidv4(); // Generate a unique ID for the game
     console.log("SERVER HIT");
     res.json({ gameId }); // Send the game ID back to the client
 });
 
-app.get('/check-room/:roomId', (req, res) => {
+app.get('/api/check-room/:roomId', (req, res) => {
     const { roomId } = req.params;
     const roomExists = Boolean(gameRooms[roomId]); // Check if the room exists in the gameRooms object
     res.json({ exists: roomExists });
@@ -494,7 +494,7 @@ function validateLocation(input, gameId) {
     }
 }
 
-app.post("/validate_location", (req, res) => {
+app.post("/api/validate_location", (req, res) => {
     const { gameId, location } = req.body;
     if (!gameId || !location) {
         return res.status(400).json({ success: false, message: "Missing gameId or location." });
