@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true })); // For parsing application/x-ww
 app.use(express.static(path.join(__dirname, 'client', 'build')));
 
 // Serve static files from the React app
-app.use(express.static(path.join(__dirname, 'client', 'public')));
+// app.use(express.static(path.join(__dirname, 'client', 'public')));
 
 // API routes ==============================================================================================================
 app.get("/api", (req, res) => {
@@ -35,32 +35,6 @@ app.get('/api/check-room/:roomId', (req, res) => {
     res.json({ exists: roomExists });
 });
 
-
-function validateLocation(input, gameId) { 
-    // Normalize input to format of locationsMap key
-    const inputName = input.toLowerCase().trim();
-
-    // Find the closest match in the hashmap
-    const keys = Array.from(locationsMap.keys());
-    const { bestMatch } = stringSimilarity.findBestMatch(inputName, keys);
-
-    if (bestMatch.rating > 0.95) { // Threshold for similarity set at 0.95
-        const location = locationsMap.get(bestMatch.target);
-
-        // Check if the location has already been guessed in this room
-        const guessedLocations = gameRooms[gameId]?.guessedLocations;
-        if (guessedLocations?.has(bestMatch.target)) {
-            return { success: false, message: `"${bestMatch.target}" has already been guessed!` };
-        } else {
-            // Mark the location as guessed for this specific room
-            guessedLocations?.add(bestMatch.target);
-            return { success: true, location_data: location };
-        }
-    } else {
-        return { success: false, message: `"${input}" is not a valid location!` };
-    }
-}
-
 app.post("/api/validate_location", (req, res) => {
     const { gameId, location } = req.body;
     if (!gameId || !location) {
@@ -72,12 +46,6 @@ app.post("/api/validate_location", (req, res) => {
 
     console.log(validationResponse);
     res.json(validationResponse);
-});
-
-// Start the server
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
 });
 
 // Serve React frontend for all other routes
@@ -513,6 +481,32 @@ function loadLocations(csvFilePath) {
     });
 }
 
+function validateLocation(input, gameId) { 
+    // Normalize input to format of locationsMap key
+    const inputName = input.toLowerCase().trim();
+
+    // Find the closest match in the hashmap
+    const keys = Array.from(locationsMap.keys());
+    const { bestMatch } = stringSimilarity.findBestMatch(inputName, keys);
+
+    if (bestMatch.rating > 0.95) { // Threshold for similarity set at 0.95
+        const location = locationsMap.get(bestMatch.target);
+
+        // Check if the location has already been guessed in this room
+        const guessedLocations = gameRooms[gameId]?.guessedLocations;
+        if (guessedLocations?.has(bestMatch.target)) {
+            return { success: false, message: `"${bestMatch.target}" has already been guessed!` };
+        } else {
+            // Mark the location as guessed for this specific room
+            guessedLocations?.add(bestMatch.target);
+            return { success: true, location_data: location };
+        }
+    } else {
+        return { success: false, message: `"${input}" is not a valid location!` };
+    }
+}
+
+
 // const locationsCSVFilePath = "../client/build/assets/datasets/cleaned_CCS_dataset.csv";
 const locationsCSVFilePath = path.join(__dirname, '..', 'client', 'public', 'datasets', 'cleaned_CCS_dataset.csv');
 
@@ -520,3 +514,8 @@ loadLocations(locationsCSVFilePath).then(() => {
     // console.log('Locations loaded into hashmap:', locationsMap);
 });
 
+// Start the server
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
