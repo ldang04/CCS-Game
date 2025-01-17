@@ -50,7 +50,7 @@ app.post("/api/validate_location", (req, res) => {
 
 // Serve React frontend for all other routes
 app.get('/*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'public', 'index.html'), (err) => {
+    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'), (err) => {
         if (err) {
             res.status(500).send(err);
         }
@@ -59,7 +59,7 @@ app.get('/*', (req, res) => {
   
   // resolve potential favicon errors
   app.get('/favicon.ico', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'public', 'favicon.ico'));
+    res.sendFile(path.join(__dirname, 'client', 'build', 'favicon.ico'));
 });
 
 // WEB SOCKET CONFIG ===========================================================================================================================
@@ -508,7 +508,7 @@ function validateLocation(input, gameId) {
 
 
 // const locationsCSVFilePath = "../client/build/assets/datasets/cleaned_CCS_dataset.csv";
-const locationsCSVFilePath = path.join(__dirname, '..', 'client', 'public', 'datasets', 'cleaned_CCS_dataset.csv');
+const locationsCSVFilePath = path.join(__dirname, '..', 'client', 'build', 'datasets', 'cleaned_CCS_dataset.csv');
 
 loadLocations(locationsCSVFilePath).then(() => {
     // console.log('Locations loaded into hashmap:', locationsMap);
