@@ -13,7 +13,9 @@ const server = http.createServer(app);
 app.use(cors());
 app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
-app.use(express.static(path.join(__dirname, 'client', 'build')));
+
+const buildPath = path.join(__dirname, 'client', "..", 'build');
+app.use(express.static(buildPath));
 
 // Serve static files from the React app
 // app.use(express.static(path.join(__dirname, 'client', 'public')));
@@ -50,7 +52,7 @@ app.post("/api/validate_location", (req, res) => {
 
 // Serve React frontend for all other routes
 app.get('/*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'), (err) => {
+    res.sendFile(path.join(buildPath, 'index.html'), (err) => {
         if (err) {
             res.status(500).send(err);
         }
@@ -59,7 +61,7 @@ app.get('/*', (req, res) => {
   
   // resolve potential favicon errors
   app.get('/favicon.ico', (req, res) => {
-    res.sendFile(path.join(__dirname, 'client', 'build', 'favicon.ico'));
+    res.sendFile(path.join(buildPath, 'favicon.ico'));
 });
 
 // WEB SOCKET CONFIG ===========================================================================================================================
