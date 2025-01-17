@@ -16,8 +16,12 @@
   },
   "scripts": {
     "start-client": "react-scripts start",
+<<<<<<< HEAD
     "start": "react-scripts start",
     "build": "react-scripts build",
+=======
+    "build": "react-scripts build && (cd ../server- && npm install)",
+>>>>>>> 055ed40f4219c65e8a5ff2a351402541de175c29
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
