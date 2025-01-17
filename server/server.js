@@ -15,27 +15,79 @@ app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
 app.use(express.static(path.join(__dirname, 'client', 'build')));
 
-// Make server serve up the client 
-app.get("/api/*", (req, res) => {
-    res.sendFile(path.join(__dirname, "client", "public", "index.html"), 
-    function(err){
-        if(err){
-            res.status(500).send(err); 
-        }
-    });
-  });
-
+// Serve static files from the React app
 app.use(express.static(path.join(__dirname, 'client', 'public')));
 
+// API routes ==============================================================================================================
+app.get("/api", (req, res) => {
+    res.send("Hello, world!"); 
+});
+
+app.get('/api/create_game', (req, res) => {
+    const gameId = uuidv4(); // Generate a unique ID for the game
+    console.log("SERVER HIT");
+    res.json({ gameId }); // Send the game ID back to the client
+});
+
+app.get('/api/check-room/:roomId', (req, res) => {
+    const { roomId } = req.params;
+    const roomExists = Boolean(gameRooms[roomId]); // Check if the room exists in the gameRooms object
+    res.json({ exists: roomExists });
+});
+
+
+function validateLocation(input, gameId) { 
+    // Normalize input to format of locationsMap key
+    const inputName = input.toLowerCase().trim();
+
+    // Find the closest match in the hashmap
+    const keys = Array.from(locationsMap.keys());
+    const { bestMatch } = stringSimilarity.findBestMatch(inputName, keys);
+
+    if (bestMatch.rating > 0.95) { // Threshold for similarity set at 0.95
+        const location = locationsMap.get(bestMatch.target);
+
+        // Check if the location has already been guessed in this room
+        const guessedLocations = gameRooms[gameId]?.guessedLocations;
+        if (guessedLocations?.has(bestMatch.target)) {
+            return { success: false, message: `"${bestMatch.target}" has already been guessed!` };
+        } else {
+            // Mark the location as guessed for this specific room
+            guessedLocations?.add(bestMatch.target);
+            return { success: true, location_data: location };
+        }
+    } else {
+        return { success: false, message: `"${input}" is not a valid location!` };
+    }
+}
+
+app.post("/api/validate_location", (req, res) => {
+    const { gameId, location } = req.body;
+    if (!gameId || !location) {
+        return res.status(400).json({ success: false, message: "Missing gameId or location." });
+    }
+
+    // Validate the location (example validation logic)
+    const validationResponse = validateLocation(location, gameId);
+
+    console.log(validationResponse);
+    res.json(validationResponse);
+});
+
+// Start the server
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
+
 // Serve React frontend for all other routes
-app.get("/*", (req, res) => {
-    res.sendFile(path.join(__dirname, "client", "public", "index.html"), 
-    function(err){
-        if(err){
-            res.status(500).send(err); 
+app.get('/*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'public', 'index.html'), (err) => {
+        if (err) {
+            res.status(500).send(err);
         }
     });
-  });
+});
   
   // resolve potential favicon errors
   app.get('/favicon.ico', (req, res) => {
@@ -468,65 +520,3 @@ loadLocations(locationsCSVFilePath).then(() => {
     // console.log('Locations loaded into hashmap:', locationsMap);
 });
 
-
-// API routes ==============================================================================================================
-app.get("/api", (req, res) => {
-    res.send("Hello, world!"); 
-});
-
-app.get('/api/create_game', (req, res) => {
-    const gameId = uuidv4(); // Generate a unique ID for the game
-    console.log("SERVER HIT");
-    res.json({ gameId }); // Send the game ID back to the client
-});
-
-app.get('/api/check-room/:roomId', (req, res) => {
-    const { roomId } = req.params;
-    const roomExists = Boolean(gameRooms[roomId]); // Check if the room exists in the gameRooms object
-    res.json({ exists: roomExists });
-});
-
-
-function validateLocation(input, gameId) { 
-    // Normalize input to format of locationsMap key
-    const inputName = input.toLowerCase().trim();
-
-    // Find the closest match in the hashmap
-    const keys = Array.from(locationsMap.keys());
-    const { bestMatch } = stringSimilarity.findBestMatch(inputName, keys);
-
-    if (bestMatch.rating > 0.95) { // Threshold for similarity set at 0.95
-        const location = locationsMap.get(bestMatch.target);
-
-        // Check if the location has already been guessed in this room
-        const guessedLocations = gameRooms[gameId]?.guessedLocations;
-        if (guessedLocations?.has(bestMatch.target)) {
-            return { success: false, message: `"${bestMatch.target}" has already been guessed!` };
-        } else {
-            // Mark the location as guessed for this specific room
-            guessedLocations?.add(bestMatch.target);
-            return { success: true, location_data: location };
-        }
-    } else {
-        return { success: false, message: `"${input}" is not a valid location!` };
-    }
-}
-
-app.post("/api/validate_location", (req, res) => {
-    const { gameId, location } = req.body;
-    if (!gameId || !location) {
-        return res.status(400).json({ success: false, message: "Missing gameId or location." });
-    }
-
-    // Validate the location (example validation logic)
-    const validationResponse = validateLocation(location, gameId);
-
-    console.log(validationResponse);
-    res.json(validationResponse);
-});
-
-// Start the server
-const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
