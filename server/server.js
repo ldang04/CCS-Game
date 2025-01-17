@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json()); // For parsing application/json
 app.use(express.urlencoded({ extended: true })); // For parsing application/x-www-form-urlencoded
 
-const buildPath = path.join(__dirname, 'client', "..", 'build');
+const buildPath = path.join(__dirname, '..', 'client', 'build');
 app.use(express.static(buildPath));
 
 // Serve static files from the React app
