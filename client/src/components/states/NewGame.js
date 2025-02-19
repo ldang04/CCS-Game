@@ -27,7 +27,7 @@ const NewGame = () => {
             console.log("sldjflsfs");
             try {
                 // Check if the room exists
-                const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/check-room/${input}`);
+                const response = await fetch(`https://geochain-backend-00df5e12a638.herokuapp.com/api/check-room/api/check-room/${input}`);
                 const data = await response.json();
                 
                 console.log("data");
@@ -46,7 +46,7 @@ const NewGame = () => {
             // Create a new game
             try {
                 // Fetch a new game ID
-                const response = await fetch(`${process.env.REACT_APP_API_BASE_URL}/api/create_game`);
+                const response = await fetch(`https://geochain-backend-00df5e12a638.herokuapp.com/api/create_game`);
                 const data = await response.json();
                 const gameId = data.gameId;
     
