@@ -46,7 +46,7 @@ const GameRoom = () => {
     };
 
     const handleCopyLink = () => {
-        const gameLink = `http://localhost:3000/game/${gameId}`;
+        const gameLink = `https://geochain-io-fce6055b2802.herokuapp.com/${gameId}`;
         navigator.clipboard.writeText(gameLink)
             .then(() => setCopyLinkSuccess(true))
             .catch(() => setCopyLinkSuccess(false));
@@ -75,8 +75,7 @@ const GameRoom = () => {
 
     useEffect(() => {
         console.log(state); 
-        console.log("WebSocket URL (from .env):", process.env.REACT_APP_API_BASE_URL);
-        console.log("Expected WebSocket URL:", process.env.REACT_APP_API_BASE_URL || "http://localhost:3001");
+
         // Prompt for nickname only once
         while (!nicknameRef.current.trim()) {
             let userNickname = "";
@@ -362,7 +361,7 @@ const GameRoom = () => {
                     </p>
 
                     <p>
-                        Share this link to invite others: {`http://localhost:3000/game/${gameId}`}{" "}
+                        Share this link to invite others: {`https://geochain-io-fce6055b2802.herokuapp.com//game/${gameId}`}{" "}
                         <button onClick={handleCopyLink} className="copy-btn">{copyLinkSuccess ? "✅" : "🔗"}</button>
                     </p>
                 </div>
