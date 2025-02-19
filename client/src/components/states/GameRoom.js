@@ -91,7 +91,8 @@ const GameRoom = () => {
         if (!nicknameRef.current) return; // Ensure nickname is set
 
         const socket = io(
-             process.env.REACT_APP_API_BASE_URL || "http://localhost:3001", // Backend runs on port 3001
+            //  process.env.REACT_APP_API_BASE_URL || "http://localhost:3001", // Backend runs on port 3001
+            "https://geochain-backend-00df5e12a638.herokuapp.com",
             {
                 transports: ["websocket"], // Force WebSocket transport
                 reconnectionAttempts: 5,   // Retry if the connection fails
