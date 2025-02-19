@@ -74,11 +74,53 @@ const GameRoom = () => {
     }
 
     useEffect(() => {
-        console.log(state);
-    }, [])
-    
+        console.log(state); 
+        console.log("WebSocket URL (from .env):", process.env.REACT_APP_API_BASE_URL);
+        console.log("Expected WebSocket URL:", process.env.REACT_APP_API_BASE_URL || "http://localhost:3001");
+        // Prompt for nickname only once
+        while (!nicknameRef.current.trim()) {
+            let userNickname = "";
+            do {
+                userNickname = prompt("Please enter your nickname:").trim();
+            } while (!userNickname);
+            nicknameRef.current = userNickname; // Set ref value
+            setNickname(userNickname); // Update state for reactivity
+        }
+    }, []);
+
     useEffect(() => {
-        if (!socket) return;
+        if (!nicknameRef.current) return; // Ensure nickname is set
+
+        const socket = io(
+             process.env.REACT_APP_API_BASE_URL || "http://localhost:3001", // Backend runs on port 3001
+            {
+                transports: ["websocket"], // Force WebSocket transport
+                reconnectionAttempts: 5,   // Retry if the connection fails
+                reconnectionDelay: 1000,   // Wait 1 second before retrying
+            }
+        );
+
+        setSocket(socket);
+        
+        // Join specific room
+        socket.emit("join-room", { 
+            gameId, 
+            nickname: nicknameRef.current, 
+            timeLimit: state?.timeLimit || 60, // Fallback to default if state is null
+            lives: state?.lives || 3 // Fallback to default if state is null
+        });
+
+        setIsJoined(true);
+
+        return () => {
+            let timestamp = new Date().toISOString(); // Get current time in ISO format
+            console.log(`[${timestamp}] DISCONNECTING`);
+            socket.disconnect();
+        };
+    }, [gameId]);
+
+    useEffect(() => {
+        if (!socket) return; 
     
         // Handle initialization for a new user
         socket.on("initialize-game", ({ locations, markers, currentLetter, users, currentTurn, timeLimit, timeLeft, timer}) => {
@@ -210,42 +252,6 @@ const GameRoom = () => {
             audio.currentTime = 0;
         };
     }, [timeLeft, audio]);
-
-
-    useEffect(() => {
-        // Prompt for nickname only once
-        while (!nicknameRef.current.trim()) {
-            let userNickname = "";
-            do {
-                userNickname = prompt("Please enter your nickname:").trim();
-            } while (!userNickname);
-            nicknameRef.current = userNickname; // Set ref value
-            setNickname(userNickname); // Update state for reactivity
-        }
-    }, []);
-
-    useEffect(() => {
-        if (!nicknameRef.current) return; // Ensure nickname is set
-
-        const socket = io(`${process.env.REACT_APP_API_BASE_URL}`); // Connect to WebSocket server
-        setSocket(socket);
-        
-        // Join specific room
-        socket.emit("join-room", { 
-            gameId, 
-            nickname: nicknameRef.current, 
-            timeLimit: state?.timeLimit || 60, // Fallback to default if state is null
-            lives: state?.lives || 3 // Fallback to default if state is null
-        });
-
-        setIsJoined(true);
-
-        return () => {
-            let timestamp = new Date().toISOString(); // Get current time in ISO format
-            console.log(`[${timestamp}] DISCONNECTING`);
-            socket.disconnect();
-        };
-    }, [gameId]);
 
     const handleLocationEnter = () => {
         if (!input.trim()) return;
